@@ -13,7 +13,9 @@ At the moment, both library and application are under development.
 ### Added
 - documentation skeleton
 - common dependencies (log and test)
-- general structure
+- general structure and lib package root
+- lib log configuration (resources)
+- pre-eq exception class and struct package with structure interfaces
 
 ### Deprecated
 - nothing
@@ -25,7 +27,7 @@ At the moment, both library and application are under development.
 - nothing
 
 ### Tested
-- nothing
+- default coefficient creation
 
 ### Security
 - nothing
