@@ -43,4 +43,10 @@ public interface Coefficient {
      * @return int imaginary part of the complex number (coefficient)
      */
     int getImag();
+
+    /**
+     * Returns calculated energy level for current coefficient.
+     * @return long value of tap energy
+     */
+    long getEnergy();
 }

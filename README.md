@@ -5,6 +5,13 @@ are converted into energy coefficients (taps) so that line quality KPIs can be c
 Together with the library there is also a small java FX based application to test parsing and calculated values (time
 and frequency domain graphs with metrics table).
 
+The idea behind the whole preEq library is to analyze preEq strings since they carry the information on what the device needs to do (how it
+needs to adjust) to account (and thus mitigate) for all the linear and sometimes non-linear distortions. With knowing the exact changes the
+device needs to do with its "setup", it is possible, in a way, to go in a reverse direction and work out the line anomalies.
+
+Calculated values and KPIs need to be presented in a more understandable way than just as a plain number values. This presentation is beyond
+this project, but app module accompanying preEq library can give a crude idea on how to do that.
+
 ## Official documentation
 
 Basic information can be found in this [README](README.md) file.

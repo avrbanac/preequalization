@@ -77,12 +77,17 @@ public class DefaultCoefficient implements Coefficient {
         return imag;
     }
 
-    public int calculateValue(byte left, byte right) {
+     private int calculateValue(byte left, byte right) {
         // since int promotion is happening with upper portion it is important to delete it
         int input = (left << 8 | (right & BYTE_MASK)) & LOWER_INT_MASK;
 
         return ((input & SIGN_MASK) != 0)
                 ? ((~input & NIBBLE_MASK) + 1) * -1
                 : input & NIBBLE_MASK;
+    }
+
+    @Override
+    public long getEnergy() {
+        return (long) real * real + (long) imag * imag;
     }
 }

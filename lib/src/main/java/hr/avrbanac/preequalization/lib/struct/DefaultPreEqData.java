@@ -3,6 +3,8 @@ package hr.avrbanac.preequalization.lib.struct;
 import hr.avrbanac.preequalization.lib.PreEqException;
 import hr.avrbanac.preequalization.lib.util.ParseUtility;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -131,19 +133,21 @@ public class DefaultPreEqData implements PreEqData {
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
 
-    private final byte[] bytes;
+    private final String preEqString;
     private final int mainTapIndex;
+    private final List<Coefficient> coefficients = new ArrayList<>();
 
-    public DefaultPreEqData(final String preEqString) {
-        preEqString
+    public DefaultPreEqData(final String rawInputPreEqString) {
+        this.preEqString = rawInputPreEqString
+                .toLowerCase()
                 .replace(":","")
                 .replace(" ","");
 
-        if (preEqString.length() != (TAP_COUNT + 1) * 8) {
+        if (this.preEqString.length() != (TAP_COUNT + 1) * 8) {
             throw PreEqException.STRING_MISMATCH_BYTE_SIZE;
         }
 
-        this.bytes = ParseUtility.hexStringToByteArray(preEqString);
+        byte[] bytes = ParseUtility.hexStringToByteArray(this.preEqString);
         this.mainTapIndex = bytes[0];
 
         if (bytes[1] != COEFFICIENT_PER_SYMBOL) {
@@ -153,11 +157,20 @@ public class DefaultPreEqData implements PreEqData {
         if (bytes[2] != TAP_COUNT) {
             throw PreEqException.WRONG_TAP_COUNT;
         }
+
+        for (int i = 4; i < bytes.length; i += 4) {
+            coefficients.add(new DefaultCoefficient(Arrays.copyOfRange(bytes, i, i + 4)));
+        }
+    }
+
+    @Override
+    public String getPreEqString() {
+        return preEqString;
     }
 
     @Override
     public List<Coefficient> getCoefficients() {
-        return null;
+        return coefficients;
     }
 
     @Override
@@ -175,4 +188,8 @@ public class DefaultPreEqData implements PreEqData {
         return COEFFICIENT_PER_SYMBOL;
     }
 
+    @Override
+    public long getMTE() {
+        return coefficients.get(mainTapIndex - 1).getEnergy();
+    }
 }
