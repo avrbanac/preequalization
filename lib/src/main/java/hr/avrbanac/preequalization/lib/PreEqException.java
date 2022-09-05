@@ -10,6 +10,9 @@ public class PreEqException extends RuntimeException {
 
     public static final PreEqException GENERAL_ERROR = new PreEqException(ErrorClass.GENERAL_ERROR);
     public static final PreEqException COEFFICIENT_MISMATCH_BYTE_SIZE = new PreEqException(ErrorClass.COEFFICIENT_MISMATCH_BYTE_SIZE);
+    public static final PreEqException STRING_MISMATCH_BYTE_SIZE = new PreEqException(ErrorClass.STRING_MISMATCH_BYTE_SIZE);
+    public static final PreEqException COEFFICIENT_PER_SYMBOL_MISMATCH = new PreEqException(ErrorClass.COEFFICIENT_PER_SYMBOL_MISMATCH);
+    public static final PreEqException WRONG_TAP_COUNT = new PreEqException(ErrorClass.WRONG_TAP_COUNT);
 
     private final ErrorClass errorClass;
 
@@ -42,10 +45,28 @@ public class PreEqException extends RuntimeException {
                 "Following pre-equalization error occurred: "),
 
         /**
+         * Pre-eq error occurred while trying to create PreEqData with the wrong byte array size (input error?).
+         */
+        STRING_MISMATCH_BYTE_SIZE(1000,
+                "Provided string contains wrong byte size"),
+
+        /**
          * Pre-eq error occurred while trying to create coefficient with the wrong byte array size (input error?).
          */
-        COEFFICIENT_MISMATCH_BYTE_SIZE(1000,
-                "Byte array of the wrong size provided for single coefficient")
+        COEFFICIENT_MISMATCH_BYTE_SIZE(1001,
+                "Byte array of the wrong size provided for single coefficient"),
+
+        /**
+         * Pre-eq error occurred while parsing pre-eq string data: wrong coefficient per symbol rate.
+         */
+        COEFFICIENT_PER_SYMBOL_MISMATCH(1002,
+                "Expected different value for coefficient per symbol, current implementation does not support this"),
+
+        /**
+         * Pre-eq error occurred while parsing pre-eq string data: wrong tap count information.
+         */
+        WRONG_TAP_COUNT(1003,
+                "PreEqualization string contains header with wrong tap count information")
         ;
 
         private final int errorCode;

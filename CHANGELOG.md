@@ -16,6 +16,7 @@ At the moment, both library and application are under development.
 - general structure and lib package root
 - lib log configuration (resources)
 - pre-eq exception class and struct package with structure interfaces
+- default implementation classes and main parsing logic
 
 ### Deprecated
 - nothing

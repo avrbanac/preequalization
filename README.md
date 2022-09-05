@@ -3,7 +3,7 @@ Docsis 2.0 / 3.0 pre-equalization library for parsing and processing of the CM u
 are converted into energy coefficients (taps) so that line quality KPIs can be calculated.
 
 Together with the library there is also a small java FX based application to test parsing and calculated values (time
-and frequency domain graphs with methics table).
+and frequency domain graphs with metrics table).
 
 ## Official documentation
 
@@ -28,7 +28,7 @@ devices, but I'm not sure if library is usable for docsis 3.1 standard. Also, th
 less than 24 energy tap calculations (for docsis 1.0).
 
 I decided to write this library and make it available on my private GitHub under the MIT licence since there never seems
-to be enough time to write it at work; and there is definitely a need for such a lib.
+to be enough time to write it at work.
 
 ## Project structure
 

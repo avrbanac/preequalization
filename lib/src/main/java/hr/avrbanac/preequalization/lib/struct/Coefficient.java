@@ -3,8 +3,7 @@ package hr.avrbanac.preequalization.lib.struct;
 /**
  * Coefficient (interface) is a main building block for the pre-equalization data. It contains original data together with the parsed data
  * separated into real and imaginary part of the complex number it represents. Same coefficient structure is used for different QAM
- * constellations. Each energy tap in pre-equalization string is represented by separate coefficient. Number of taps depend on type of the
- * pre-eq string (docsis 1.1 used less than 24).
+ * constellations. Each energy tap in pre-equalization string is represented by separate coefficient.
  */
 public interface Coefficient {
 
