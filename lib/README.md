@@ -2,7 +2,7 @@
 
 > [back to parent readme](../README.md)
 
-Main part of this project - this is a docsis 2.0 / 3.0 pre-equalization library for parsing and processing of the CM
+Main part of this project - this is a DOCSIS 2.0 / 3.0 pre-equalization library for parsing and processing of the CM
 upstream PreEq strings.
 
 ## Official documentation

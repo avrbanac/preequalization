@@ -49,4 +49,16 @@ public interface Coefficient {
      * @return long value of tap energy
      */
     long getEnergy();
+
+    /**
+     * Returns calculated energy ratio of the current coefficient (tap) to the main tap nominal energy.
+     * @return double value of the energy ratio (current to MTNE) in dB
+     */
+    double getEnergyRatio(final long lMTNE);
+
+    /**
+     * Returns coefficient index. This is an actual index and not an array index. For array access, use value of one less.
+     * @return int coefficient index
+     */
+    int getIndex();
 }

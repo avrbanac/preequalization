@@ -3,10 +3,10 @@ package hr.avrbanac.preequalization.lib.struct;
 import java.util.List;
 
 /**
- * This is the representation of the parsed pre-equalization string data. It extends pre-equalization header data with energy tap
- * coefficients.
+ * This is the representation of the parsed pre-equalization string data. It extends pre-equalization header data and metrics interface with
+ * energy tap coefficients.
  */
-public interface PreEqData extends PreEqHeader {
+public interface PreEqData extends PreEqHeader, PreEqMetrics {
 
     /**
      * Returns input pre-eq string in lower case without delimiters (whitespaces or colon)
@@ -20,9 +20,4 @@ public interface PreEqData extends PreEqHeader {
      */
     List<Coefficient> getCoefficients();
 
-    /**
-     * Returns adaptive equalizer main tap energy.
-     * @return long value of MTE
-     */
-    long getMTE();
 }

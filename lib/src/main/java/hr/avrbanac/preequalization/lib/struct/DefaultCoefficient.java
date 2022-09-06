@@ -5,7 +5,7 @@ import hr.avrbanac.preequalization.lib.PreEqException;
 /**
  * <p>
  * Default implementation for the {@link Coefficient} interface. Currently, (as of v0.1.0) this is the only implementation, since as it
- * seems, docsis 3.0 and docsis 3.1 still work with same coefficient structure. Complex coefficients are stored in 2 bytes increments (total
+ * seems, DOCSIS 2.0 and DOCSIS 3.0 work with same coefficient structure. Complex coefficients are stored in 2 bytes increments (total
  * of 4 bytes). Each byte increment (2 bytes in total) represent one number value (real/imaginary part alternating). Each number value is
  * thus comprised of 16 bits which we can think of in terms of 4 nibbles of 4 bits.
  * </p>
@@ -34,50 +34,101 @@ public class DefaultCoefficient implements Coefficient {
     private static final int COMPLEX_SIZE   = REAL_SIZE + IMAG_SIZE;
 
     private final byte[] bytes;
+    private final int index;
     private final int real;
     private final int imag;
+    private final long energy;
 
-    public DefaultCoefficient(final byte[] bytes) {
+    public DefaultCoefficient(
+            final byte[] bytes,
+            final int index) {
+
         if (bytes.length != COMPLEX_SIZE) {
             throw PreEqException.COEFFICIENT_MISMATCH_BYTE_SIZE;
         }
 
         this.bytes = bytes;
+        this.index = index;
         this.real = calculateValue(bytes[0], bytes[1]);
         this.imag = calculateValue(bytes[2], bytes[3]);
+        this.energy = (long) this.real * this.real + (long) this.imag * this.imag;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public int getRealSize() {
         return REAL_SIZE;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public int getImagSize() {
         return IMAG_SIZE;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public int getCoefficientSize() {
         return COMPLEX_SIZE;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public byte[] getBytes() {
         return bytes;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public int getReal() {
         return real;
     }
 
+    /**
+     *  {@inheritDoc}
+     */
     @Override
     public int getImag() {
         return imag;
     }
 
-     private int calculateValue(byte left, byte right) {
+    /**
+     *  {@inheritDoc}
+     */
+    @Override
+    public long getEnergy() {
+        return energy;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @param lMTNE long value of calculated main tap nominal energy
+     */
+    @Override
+    public double getEnergyRatio(final long lMTNE) {
+        double energyRatio = 10 * Math.log10(1d * energy / lMTNE);
+        return Math.max(energyRatio, -100d);
+    }
+
+    /**
+     *  {@inheritDoc}
+     */
+    @Override
+    public int getIndex() {
+        return index;
+    }
+
+    private int calculateValue(byte left, byte right) {
         // since int promotion is happening with upper portion it is important to delete it
         int input = (left << 8 | (right & BYTE_MASK)) & LOWER_INT_MASK;
 
@@ -86,8 +137,4 @@ public class DefaultCoefficient implements Coefficient {
                 : input & NIBBLE_MASK;
     }
 
-    @Override
-    public long getEnergy() {
-        return (long) real * real + (long) imag * imag;
-    }
 }

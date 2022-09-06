@@ -1,5 +1,5 @@
 # Pre-equalization (PreEq) - under development!
-Docsis 2.0 / 3.0 pre-equalization library for parsing and processing of the CM upstream PreEq strings. These hex strings
+DOCSIS 2.0 / 3.0 pre-equalization library for parsing and processing of the CM upstream PreEq strings. These hex strings
 are converted into energy coefficients (taps) so that line quality KPIs can be calculated.
 
 Together with the library there is also a small java FX based application to test parsing and calculated values (time
@@ -29,17 +29,21 @@ Current version is tracked in [pom.xml](pom.xml).
 
 ## Disclaimer (and reasoning behind this)
 
-I'm, by no means, a docsis expert. All needed information to write this library I found online, and with a little 
-stubbornness, managed to put together. From what I read, these calculations are both valid for docsis 2.0 and 3.0
-devices, but I'm not sure if library is usable for docsis 3.1 standard. Also, there really was no need for me to support
-less than 24 energy tap calculations (for docsis 1.0).
+I'm, by no means, a DOCSIS expert. All needed information to write this library I found online, and with a little 
+stubbornness, managed to put together. From what I read, these calculations are both valid for DOCSIS 2.0 and 3.0
+devices, but I'm not sure if library is usable for DOCSIS 3.1 standard. Also, there really was no need for me to support
+less than 24 energy tap calculations (for DOCSIS 1.0) or more than 24 for that matter. This project's scope is limited 
+only to pre-equalization strings so parsing support for some other eq structure is omitted by design. If at any time 
+need arises for some other eq structure parsing and processing, lib can be extended. Default struct implementations can 
+be renamed to better describe internal structure, while factory classes or builders can be added to accommodate easier 
+eq string parsing.
 
 I decided to write this library and make it available on my private GitHub under the MIT licence since there never seems
 to be enough time to write it at work.
 
 ## Project structure
 
-Docsis pre-equalization project is a two-part project:
+DOCSIS pre-equalization project is a two-part project:
 
 - [ ] pre-equalization library
 - [ ] pre-equalization application (for testing purposes)

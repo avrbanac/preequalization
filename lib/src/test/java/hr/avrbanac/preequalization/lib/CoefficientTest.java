@@ -18,7 +18,7 @@ public class CoefficientTest {
 
     @Test
     void testDefaultCoefficient() {
-        Coefficient coefficient = new DefaultCoefficient(INPUT_BYTES);
+        Coefficient coefficient = new DefaultCoefficient(INPUT_BYTES,0);
         Assertions.assertEquals(OUTPUT_REAL_PART, coefficient.getReal());
         Assertions.assertEquals(OUTPUT_IMAG_PART, coefficient.getImag());
     }
