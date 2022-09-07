@@ -188,23 +188,27 @@ public class DefaultPreEqData implements PreEqData {
             coefficients.add(new DefaultCoefficient(Arrays.copyOfRange(bytes, i, i + 4), i / 4));
         }
 
-        lMTE = coefficients.get(mainTapIndex - 1).getEnergy();
-        lPreMTE = calculateEnergyForTaps(1, mainTapIndex - 1);
-        lPostMTE = calculateEnergyForTaps(mainTapIndex + 1, TAP_COUNT);
-        lTTE = lPreMTE + lMTE + lPostMTE;
-        dMTC = 10 * Math.log10(1d * lTTE / lMTE);
-        dMTR = 10 * Math.log10(1d * lMTE / (lPreMTE + lPostMTE));
-        dNMTER = 10 * Math.log10(1d * (lPreMTE + lPostMTE) / lTTE);
-        dPreMTTER = 10 * Math.log10(1d * lPreMTE / lTTE);
-        dPostMTTER = 10 * Math.log10(1d * lPostMTE / lTTE);
-        dPPESR = 10 * Math.log10(1d * lPreMTE / lPostMTE);
-        dPPTSR = 10 * Math.log10(1d * coefficients.get(mainTapIndex - 2).getEnergy() / coefficients.get(mainTapIndex).getEnergy());
+        try {
+            lMTE = coefficients.get(mainTapIndex - 1).getEnergy();
+            lPreMTE = calculateEnergyForTaps(1, mainTapIndex - 1);
+            lPostMTE = calculateEnergyForTaps(mainTapIndex + 1, TAP_COUNT);
+            lTTE = lPreMTE + lMTE + lPostMTE;
+            dMTC = 10 * Math.log10(1d * lTTE / lMTE);
+            dMTR = 10 * Math.log10(1d * lMTE / (lPreMTE + lPostMTE));
+            dNMTER = 10 * Math.log10(1d * (lPreMTE + lPostMTE) / lTTE);
+            dPreMTTER = 10 * Math.log10(1d * lPreMTE / lTTE);
+            dPostMTTER = 10 * Math.log10(1d * lPostMTE / lTTE);
+            dPPESR = 10 * Math.log10(1d * lPreMTE / lPostMTE);
+            dPPTSR = 10 * Math.log10(1d * coefficients.get(mainTapIndex - 2).getEnergy() / coefficients.get(mainTapIndex).getEnergy());
 
-        lMTNA = Math.round(Math.pow(2, Math.ceil(Math.log(Math.sqrt(lTTE)) / Math.log(2))) - 1);
-        lMTNE = lMTNA * lMTNA;
+            lMTNA = Math.round(Math.pow(2, Math.ceil(Math.log(Math.sqrt(lTTE)) / Math.log(2))) - 1);
+            lMTNE = lMTNA * lMTNA;
+        } catch (Exception e) {
+            throw new PreEqException(e.getMessage());
+        }
     }
 
-    public long calculateEnergyForTaps(
+    private long calculateEnergyForTaps(
             final int startTap,
             final int endTap) {
 

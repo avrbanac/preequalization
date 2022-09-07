@@ -67,6 +67,7 @@ public class PreEqException extends RuntimeException {
          */
         WRONG_TAP_COUNT(1003,
                 "PreEqualization string contains header with wrong tap count information")
+
         ;
 
         private final int errorCode;
