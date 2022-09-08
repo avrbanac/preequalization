@@ -100,5 +100,11 @@ public interface PreEqMetrics {
      */
     double getPPTSR();
 
+    /**
+     * Returns the number of nanoseconds it took for pre-eq string to be parsed from input format to final pre-eq structure together with
+     * calculated key metrics;
+     * @return long number of nanoseconds
+     */
+    long getElapsedTime();
 }
 

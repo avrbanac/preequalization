@@ -1,7 +1,16 @@
 package hr.avrbanac.preequalization.lib;
 
+import hr.avrbanac.preequalization.lib.analysis.PreEqAnalysis;
+import hr.avrbanac.preequalization.lib.struct.Coefficient;
+import hr.avrbanac.preequalization.lib.struct.DefaultCoefficient;
 import hr.avrbanac.preequalization.lib.struct.DefaultPreEqData;
 import hr.avrbanac.preequalization.lib.struct.PreEqData;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
+import org.apache.commons.math3.util.Precision;
+import org.apache.logging.log4j.core.util.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -12,11 +21,20 @@ public class PreEqDataTest {
     private static final String TAP_FORMAT = "%3d  |%4x%3x%3x%3x  |%6d%5d  |%8d  |%13.4f";
     private static final String RATIO_FORMAT =
             "RATIO: [MTC: %.3f dB, MTR: %.3f dB, NMTER: %.3f dB, preMTTER: %.3f dB, postMTTER: %.3f dB, PPESR: %.3f dB, PPTSR: %.3f dB]";
+    private static final byte[] INPUT_BYTES = new byte[]{
+            (byte)0xff,
+            (byte)0xf0,
+            (byte)0x00,
+            (byte)0x11
+    };
+    private static final int OUTPUT_REAL_PART = -16;
+    private static final int OUTPUT_IMAG_PART = 17;
     private static final String INPUT_STRING = "08 01 18 00 " + // header
             "00 04 ff fd ff fb ff fa ff fd ff fd 00 07 00 04 ff f8 00 00 00 17 ff ff ff d6 ff e8 " + // group > pre-main taps [F1..F7]
             "07 f7 ff f9 " + // main tap [F8]
             "ff 8a ff 94 ff f7 00 28 00 11 ff ec ff f7 00 19 00 06 ff f5 ff fc ff ff 00 0d ff fb 00 01 00 01 " + // [F9..F16]
             "00 04 00 04 ff f6 00 07 00 07 ff fb 00 00 00 08 ff ff ff fe 00 00 00 04 ff fc ff ff 00 08 00 00"; // [F17..F24]
+    // for provided pre-eq string, these are the metrics values calculated by the third party system:
     private static final int MAIN_TAP_INDEX = 8;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
@@ -26,10 +44,25 @@ public class PreEqDataTest {
     private static final long PRE_MTE = 3103L;
     private static final long POST_MTE = 29455L;
     private static final long TTE = 4190128L;
+    private static final double MTC = 0.034d;
+    private static final double MTR = 21.062d;
+    private static final double NMTER = -21.096d;
+    private static final double PRE_MTTER = -31.304d;
+    private static final double POST_MTTER = -21.531d;
+    private static final double PPESR = -9.774d;
+    private static final double PPTSR = -10.388d;
+
+    @Test
+    void testDefaultCoefficient() {
+        Coefficient coefficient = new DefaultCoefficient(INPUT_BYTES,0);
+        Assertions.assertEquals(OUTPUT_REAL_PART, coefficient.getReal());
+        Assertions.assertEquals(OUTPUT_IMAG_PART, coefficient.getImag());
+    }
 
     @Test
     void testDefaultPreEqData() {
         PreEqData ped = new DefaultPreEqData(INPUT_STRING);
+        LOG.info("It took {} nanoseconds for data to be parsed and calculated", ped.getElapsedTime());
         LOG.info("INPUT: {}", ped.getPreEqString());
         Assertions.assertEquals(INPUT_STRING.toLowerCase().replace(" ", ""), ped.getPreEqString());
 
@@ -63,6 +96,23 @@ public class PreEqDataTest {
 
         LOG.info(String.format(RATIO_FORMAT,
                 ped.getMTC(), ped.getMTR(), ped.getNMTER(), ped.getPreMTTER(), ped.getPostMTTER(), ped.getPPESR(), ped.getPPTSR()));
+        Assertions.assertEquals(MTC, Precision.round(ped.getMTC(), 3));
+        Assertions.assertEquals(MTR, Precision.round(ped.getMTR(), 3));
+        Assertions.assertEquals(NMTER, Precision.round(ped.getNMTER(), 3));
+        Assertions.assertEquals(PRE_MTTER, Precision.round(ped.getPreMTTER(), 3));
+        Assertions.assertEquals(POST_MTTER, Precision.round(ped.getPostMTTER(), 3));
+        Assertions.assertEquals(PPESR, Precision.round(ped.getPPESR(), 3));
+        Assertions.assertEquals(PPTSR, Precision.round(ped.getPPTSR(), 3));
+    }
 
+    @Test
+    void testPreEqAnalysis() {
+        PreEqData ped = new DefaultPreEqData(INPUT_STRING);
+        PreEqAnalysis pea = new PreEqAnalysis(ped);
+        Complex[] icfr = pea.getInChannelFrequencyResponse();
+        LOG.info ("It took {} ns for FFT preparation and calculation.", pea.getElapsedTime());
+        for (Complex cmpl : icfr) {
+            LOG.info("{}", cmpl);
+        }
     }
 }

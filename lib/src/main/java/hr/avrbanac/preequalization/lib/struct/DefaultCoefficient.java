@@ -25,18 +25,43 @@ import hr.avrbanac.preequalization.lib.PreEqException;
  */
 public class DefaultCoefficient implements Coefficient {
 
+    // Defined masks for coefficient parsing:
     private static final int SIGN_MASK      = 0b0000_1000_0000_0000;
     private static final int NIBBLE_MASK    = 0b0000_1111_1111_1111;
     private static final int LOWER_INT_MASK = 0x00_00_ff_ff;
     private static final int BYTE_MASK      = 0x00_00_00_ff;
-    private static final int REAL_SIZE      = 2;
-    private static final int IMAG_SIZE      = 2;
-    private static final int COMPLEX_SIZE   = REAL_SIZE + IMAG_SIZE;
 
+    /**
+     * Size in bytes for the real portion of the complex coefficient.
+     */
+    private static final int REAL_SIZE      = 2;
+    /**
+     * Size in bytes for the imaginary portion of the complex coefficient.
+     */
+    private static final int IMAG_SIZE      = 2;
+    /**
+     * Total size for one complex coefficient in bytes.
+     */
+    private static final int COMPLEX_SIZE   = REAL_SIZE + IMAG_SIZE;
+    /**
+     * Original bytes array provided to CTOR.
+     */
     private final byte[] bytes;
+    /**
+     * Index of the coefficient (energy tap), i.e. this is not an array index but real tap index instead.
+     */
     private final int index;
+    /**
+     * Dec. value of the coefficient real part.
+     */
     private final int real;
+    /**
+     * Dec. value of the coefficient imaginary part.
+     */
     private final int imag;
+    /**
+     * Energy contained in coefficient which corresponds to re^2 + im^2.
+     */
     private final long energy;
 
     public DefaultCoefficient(

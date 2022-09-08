@@ -1,7 +1,7 @@
 package hr.avrbanac.preequalization.lib.struct;
 
 import hr.avrbanac.preequalization.lib.PreEqException;
-import hr.avrbanac.preequalization.lib.util.ParseUtility;
+import hr.avrbanac.preequalization.lib.util.ParsingUtility;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,6 +148,11 @@ public class DefaultPreEqData implements PreEqData {
      */
     private final List<Coefficient> coefficients = new ArrayList<>();
 
+    /**
+     * Time in milliseconds it took for data to be parsed and calculated.
+     */
+    private final long elapsedTime;
+
     // The following are the key metrics:
     private final long lMTE;
     private final long lMTNA;
@@ -164,6 +169,7 @@ public class DefaultPreEqData implements PreEqData {
     private final double dPPTSR;
 
     public DefaultPreEqData(final String rawInputPreEqString) {
+        long start = System.nanoTime();
         this.preEqString = rawInputPreEqString
                 .toLowerCase()
                 .replace(":","")
@@ -173,7 +179,7 @@ public class DefaultPreEqData implements PreEqData {
             throw PreEqException.STRING_MISMATCH_BYTE_SIZE;
         }
 
-        byte[] bytes = ParseUtility.hexStringToByteArray(this.preEqString);
+        byte[] bytes = ParsingUtility.hexStringToByteArray(this.preEqString);
         this.mainTapIndex = bytes[0];
 
         if (bytes[1] != COEFFICIENT_PER_SYMBOL) {
@@ -206,6 +212,8 @@ public class DefaultPreEqData implements PreEqData {
         } catch (Exception e) {
             throw new PreEqException(e.getMessage());
         }
+
+        this.elapsedTime = System.nanoTime() - start;
     }
 
     private long calculateEnergyForTaps(
@@ -362,5 +370,13 @@ public class DefaultPreEqData implements PreEqData {
     @Override
     public double getPPTSR() {
         return dPPTSR;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getElapsedTime() {
+        return elapsedTime;
     }
 }

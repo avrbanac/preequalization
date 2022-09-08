@@ -18,6 +18,7 @@ At the moment, both library and application are under development.
 - pre-eq exception class and struct package with structure interfaces
 - default implementation classes and main parsing logic
 - key metrics calculation
+- analysys package with fft
 
 ### Deprecated
 - nothing
@@ -31,6 +32,7 @@ At the moment, both library and application are under development.
 ### Tested
 - default coefficient creation
 - default pre-eq data creation with structure output
+- alanysis for pre-eq (FFT)
 
 ### Security
 - nothing

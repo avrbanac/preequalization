@@ -13,6 +13,8 @@ public class PreEqException extends RuntimeException {
     public static final PreEqException STRING_MISMATCH_BYTE_SIZE = new PreEqException(ErrorClass.STRING_MISMATCH_BYTE_SIZE);
     public static final PreEqException COEFFICIENT_PER_SYMBOL_MISMATCH = new PreEqException(ErrorClass.COEFFICIENT_PER_SYMBOL_MISMATCH);
     public static final PreEqException WRONG_TAP_COUNT = new PreEqException(ErrorClass.WRONG_TAP_COUNT);
+    public static final PreEqException STRING_NOT_BYTE_REPRESENTATION = new PreEqException(ErrorClass.STRING_NOT_BYTE_REPRESENTATION);
+    public static final PreEqException FFT_TAP_COUNT_ERROR = new PreEqException(ErrorClass.FFT_TAP_COUNT_ERROR);
 
     private final ErrorClass errorClass;
 
@@ -51,22 +53,34 @@ public class PreEqException extends RuntimeException {
                 "Provided string contains wrong byte size"),
 
         /**
+         * Pre-eq error occurred while trying to convert string representation of the byte array into real byte array.
+         */
+        STRING_NOT_BYTE_REPRESENTATION(2000,
+                "Given string contains characters not part of byte array representation (0-9,a-f)"),
+
+        /**
          * Pre-eq error occurred while trying to create coefficient with the wrong byte array size (input error?).
          */
-        COEFFICIENT_MISMATCH_BYTE_SIZE(1001,
+        COEFFICIENT_MISMATCH_BYTE_SIZE(2000,
                 "Byte array of the wrong size provided for single coefficient"),
 
         /**
          * Pre-eq error occurred while parsing pre-eq string data: wrong coefficient per symbol rate.
          */
-        COEFFICIENT_PER_SYMBOL_MISMATCH(1002,
+        COEFFICIENT_PER_SYMBOL_MISMATCH(2001,
                 "Expected different value for coefficient per symbol, current implementation does not support this"),
 
         /**
          * Pre-eq error occurred while parsing pre-eq string data: wrong tap count information.
          */
-        WRONG_TAP_COUNT(1003,
-                "PreEqualization string contains header with wrong tap count information")
+        WRONG_TAP_COUNT(3000,
+                "PreEqualization string contains header with wrong tap count information"),
+
+        /**
+         * Pre-eq error occurred while trying to determine FFT input array size.
+         */
+        FFT_TAP_COUNT_ERROR(3001,
+                "PreEqualization tap count too large for FFT calculation, parsed structure wrong?"),
 
         ;
 
