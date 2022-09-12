@@ -130,6 +130,7 @@ import java.util.List;
  */
 public class DefaultPreEqData implements PreEqData {
 
+    private static final int NIBBLE_CHECK_MASK = 0b1111_0000_0000_0000;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
 
@@ -190,8 +191,10 @@ public class DefaultPreEqData implements PreEqData {
             throw PreEqException.WRONG_TAP_COUNT;
         }
 
+        boolean use3NibbleEncoding = is3NibbleEncoding(bytes);
+
         for (int i = 4; i < bytes.length; i += 4) {
-            coefficients.add(new DefaultCoefficient(Arrays.copyOfRange(bytes, i, i + 4), i / 4));
+            coefficients.add(new DefaultCoefficient(Arrays.copyOfRange(bytes, i, i + 4), i / 4, use3NibbleEncoding));
         }
 
         try {
@@ -378,5 +381,20 @@ public class DefaultPreEqData implements PreEqData {
     @Override
     public long getElapsedTime() {
         return elapsedTime;
+    }
+
+    /**
+     * Checks whole provided byte array for leading (fourth) nibble of each real / imaginary part of the complex coefficient. Only if all
+     * checked nibbles are zero can 3-nibble decoding be used.
+     * @param bytes provided array
+     * @return true if all leading nibbles are zero for all coefficients and their real / imaginary parts
+     * @see DefaultCoefficient
+     */
+    private boolean is3NibbleEncoding(final byte[] bytes) {
+        for (int i = 4; i < bytes.length; i += 2) {
+            if ((bytes[i] & NIBBLE_CHECK_MASK) != 0) return false;
+        }
+
+        return true;
     }
 }

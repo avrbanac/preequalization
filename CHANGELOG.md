@@ -24,7 +24,7 @@ At the moment, both library and application are under development.
 - nothing
 
 ### Fixed
-- nothing
+- switched from universal 3 nibble coefficient decoding to more complex decoding for modems that use higher than 2047 MTNA
 
 ### Removed
 - nothing

@@ -14,6 +14,7 @@ import hr.avrbanac.preequalization.lib.PreEqException;
  * <h3>
  * Problem with different representations
  * </h3>
+ * <strong>DEPRECATED:</strong>
  * <p>
  * Amongst different CM vendors, the representation of coefficients differ. There are variations in maximum amplitude (511, 1023, 2047), as
  * well as variations in the way the coefficients are interpreted (3 and 4 nibbles 2's complement). Since there are currently no CM devices
@@ -22,6 +23,15 @@ import hr.avrbanac.preequalization.lib.PreEqException;
  * For positive number encoding, coefficient just needs to be converted from hex (binary) to dec. If the number is negative (leading bit of
  * the 3 remaining nibbles equals 1), 2's complement needs to be calculated (invert all bits values and add 1).
  * </p>
+ * <strong>CURRENT VERSION: </strong>
+ * <p>
+ * Amongst different CM vendors, the representation of coefficients differ. There are variations in maximum amplitude (511, 1023, 2047 or
+ * higher), as vell as variations in the way the coefficients are interpreted (3 and 4 nibbles 2's complement). There are currently some CM
+ * devices that store max amplitude greater than 2047, so there is no universal way to decode values. That is why different approaches need
+ * to be defined for 3 and 4 nibble decoding. Only if no value is stored using 4 nibbles throughout entire pre-eq string, then 3 nibble
+ * encoding is used, otherwise default is 4 nibble decoding.
+ * </p>
+ *
  */
 public class DefaultCoefficient implements Coefficient {
 
@@ -66,7 +76,8 @@ public class DefaultCoefficient implements Coefficient {
 
     public DefaultCoefficient(
             final byte[] bytes,
-            final int index) {
+            final int index,
+            final boolean use3NibbleEncoding) {
 
         if (bytes.length != COMPLEX_SIZE) {
             throw PreEqException.COEFFICIENT_MISMATCH_BYTE_SIZE;
@@ -74,8 +85,8 @@ public class DefaultCoefficient implements Coefficient {
 
         this.bytes = bytes;
         this.index = index;
-        this.real = calculateValue(bytes[0], bytes[1]);
-        this.imag = calculateValue(bytes[2], bytes[3]);
+        this.real = calculateValue(bytes[0], bytes[1], use3NibbleEncoding);
+        this.imag = calculateValue(bytes[2], bytes[3], use3NibbleEncoding);
         this.energy = (long) this.real * this.real + (long) this.imag * this.imag;
     }
 
@@ -153,11 +164,27 @@ public class DefaultCoefficient implements Coefficient {
         return index;
     }
 
-    private int calculateValue(byte left, byte right) {
+    /**
+     * Coefficients real or imaginary part can be encoded either in 3 or 4 4-bit nibble. If 3 nibble encoding is used, first 4 bits need to
+     * be zeroed and fifth bit will define whether the value is positive or not. If 4 nibble encoding is used, 2 bytes are used and only
+     * int promotion needs to be accounted for.
+     * @param left first input byte
+     * @param right second input byte
+     * @return decoded value using either 3 or 4 nibble decoding
+     */
+    private int calculateValue(
+            final byte left,
+            final byte right,
+            final boolean is3NibbleEncoding) {
+
+        if (!is3NibbleEncoding) {
+            return left << 8 | right & BYTE_MASK;
+        }
+
         // since int promotion is happening with upper portion it is important to delete it
         int input = (left << 8 | (right & BYTE_MASK)) & LOWER_INT_MASK;
 
-        return ((input & SIGN_MASK) != 0)
+        return ((input & (SIGN_MASK)) != 0)
                 ? ((~input & NIBBLE_MASK) + 1) * -1
                 : input & NIBBLE_MASK;
     }
