@@ -16,6 +16,7 @@ Please see [parent CHANGELOG](../CHANGELOG.md) for more information on what has 
 ## Current version
 
 Current module version is tracked in [parent pom.xml](../pom.xml) file.
+Also, same version number is used for parent and both modules via revision reference.
 
 ## Author
 

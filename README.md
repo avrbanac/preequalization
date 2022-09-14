@@ -26,6 +26,7 @@ Both lib and app changes will be kept in the same changelog.
 ## Current version
 
 Current version is tracked in [pom.xml](pom.xml).
+Also, same version number is used for parent and both modules via revision reference.
 
 ## Disclaimer (and reasoning behind this)
 

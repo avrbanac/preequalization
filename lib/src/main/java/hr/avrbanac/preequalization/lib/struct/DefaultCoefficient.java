@@ -147,8 +147,15 @@ public class DefaultCoefficient implements Coefficient {
     }
 
     /**
+     *  {@inheritDoc}
+     */
+    @Override
+    public int getIndex() {
+        return index;
+    }
+
+    /**
      * {@inheritDoc}
-     * @param lMTNE long value of calculated main tap nominal energy
      */
     @Override
     public double getEnergyRatio(final long lMTNE) {
@@ -157,11 +164,19 @@ public class DefaultCoefficient implements Coefficient {
     }
 
     /**
-     *  {@inheritDoc}
+     * {@inheritDoc}
      */
     @Override
-    public int getIndex() {
-        return index;
+    public double getRelativePowerReal(final long lMTNA) {
+        return 1.0d * real / lMTNA;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getRelativePowerImag(final long lMTNA) {
+        return 1.0d * imag / lMTNA;
     }
 
     /**

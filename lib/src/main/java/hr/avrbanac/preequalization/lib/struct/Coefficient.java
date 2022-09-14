@@ -52,6 +52,7 @@ public interface Coefficient {
 
     /**
      * Returns calculated energy ratio of the current coefficient (tap) to the main tap nominal energy.
+     * @param lMTNE long value of calculated main tap nominal energy
      * @return double value of the energy ratio (current to MTNE) in dB
      */
     double getEnergyRatio(final long lMTNE);
@@ -61,4 +62,18 @@ public interface Coefficient {
      * @return int coefficient index
      */
     int getIndex();
+
+    /**
+     * Returns relative power for real part of coefficient.
+     * @param lMTNA long value of calculated main tap nominal amplitude
+     * @return double value of relative power for real portion of the coefficient
+     */
+    double getRelativePowerReal(final long lMTNA);
+
+    /**
+     * Returns relative power for imaginary part of coefficient.
+     * @param lMTNA long value of calculated main tap nominal amplitude
+     * @return double value of relative power for imaginary portion of the coefficient
+     */
+    double getRelativePowerImag(final long lMTNA);
 }
