@@ -1,10 +1,10 @@
-package hr.avrbanac.preequalization.lib;
+package hr.avrbanac.docsis.lib;
 
-import hr.avrbanac.preequalization.lib.analysis.PreEqAnalysis;
-import hr.avrbanac.preequalization.lib.struct.Coefficient;
-import hr.avrbanac.preequalization.lib.struct.DefaultCoefficient;
-import hr.avrbanac.preequalization.lib.struct.DefaultPreEqData;
-import hr.avrbanac.preequalization.lib.struct.PreEqData;
+import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
+import hr.avrbanac.docsis.lib.struct.PreEqData;
+import hr.avrbanac.docsis.lib.struct.Coefficient;
+import hr.avrbanac.docsis.lib.struct.DefaultCoefficient;
+import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import org.apache.commons.math3.util.Precision;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

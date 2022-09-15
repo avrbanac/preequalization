@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib.analysis;
+package hr.avrbanac.docsis.lib.analysis;
 
 /**
  * This enumeration defines in which way input array for FFT analysis needs to be organized. Online documentation describes main tap

@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
 /**
  * Pre-equalization header contains metadata for provided pre-equalization string.

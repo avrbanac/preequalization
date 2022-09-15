@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib;
+package hr.avrbanac.docsis.lib;
 
 /**
  * Custom {@link RuntimeException} for pre-eq lib purposes. This exception will be thrown in case something fails with API (lib) usage in

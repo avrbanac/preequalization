@@ -9,6 +9,15 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 At the moment, application is under development.
 Lib part is missing TDR calculation and group correlation analysis.
 
+## v0.2.1 @avrbanac - app WIP
+
+### Added
+- app FX skeleton with fxml support
+- main view (WIP)
+
+### Fixed
+- package change from hr.avrbanac.preequalization to hr.avrbanac.docsis to follow groupId.artifactId naming convention
+
 ## v0.2.0 @avrbanac - 20220914
 
 Lib is now functional for pre-eq analysis (both 24-tap and ICFR plotting). Check under unreleased section of the readme file for rest of the

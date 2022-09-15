@@ -1,15 +1,14 @@
-package hr.avrbanac.preequalization.lib.analysis;
+package hr.avrbanac.docsis.lib.analysis;
 
-import hr.avrbanac.preequalization.lib.PreEqException;
-import hr.avrbanac.preequalization.lib.struct.Coefficient;
-import hr.avrbanac.preequalization.lib.struct.PreEqData;
+import hr.avrbanac.docsis.lib.PreEqException;
+import hr.avrbanac.docsis.lib.struct.Coefficient;
+import hr.avrbanac.docsis.lib.struct.PreEqData;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
 import java.util.List;
-
 
 /**
  * Main analysis class for parsed pre-equalization data.

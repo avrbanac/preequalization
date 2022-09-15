@@ -1,6 +1,6 @@
-package hr.avrbanac.preequalization.lib.util;
+package hr.avrbanac.docsis.lib.util;
 
-import hr.avrbanac.preequalization.lib.PreEqException;
+import hr.avrbanac.docsis.lib.PreEqException;
 
 /**
  * Utility class for parsing purposes.

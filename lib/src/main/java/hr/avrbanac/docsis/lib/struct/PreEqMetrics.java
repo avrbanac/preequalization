@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
 /**
  * This interface defines pre-eq metrics to allow for better organisation of the pre-eq structure.

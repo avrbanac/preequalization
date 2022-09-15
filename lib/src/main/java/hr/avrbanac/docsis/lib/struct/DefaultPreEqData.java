@@ -1,7 +1,7 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
-import hr.avrbanac.preequalization.lib.PreEqException;
-import hr.avrbanac.preequalization.lib.util.ParsingUtility;
+import hr.avrbanac.docsis.lib.util.ParsingUtility;
+import hr.avrbanac.docsis.lib.PreEqException;
 
 import java.util.ArrayList;
 import java.util.Arrays;

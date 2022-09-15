@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
 import java.util.List;
 

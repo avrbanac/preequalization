@@ -1,6 +1,6 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
-import hr.avrbanac.preequalization.lib.PreEqException;
+import hr.avrbanac.docsis.lib.PreEqException;
 
 /**
  * <p>

@@ -1,4 +1,4 @@
-package hr.avrbanac.preequalization.lib.struct;
+package hr.avrbanac.docsis.lib.struct;
 
 /**
  * Coefficient (interface) is a main building block for the pre-equalization data. It contains original data together with the parsed data
