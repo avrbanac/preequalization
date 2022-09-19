@@ -15,7 +15,7 @@ public interface PreEqMetrics {
      * approximation can be improved by taking 2 to the power of the ratio between ln of the square root of TTE and ln of 2. The ratio needs
      * to be rounded up and subtracted by 1. Pre-eq taps exhibit different nominal or maximum amplitudes depending on CM implementations.
      * Maximum amplitude implementations are: 2047, 1023, or 511.
-     * @return long value of nominal amplitude.
+     * @return long value of main tap nominal amplitude.
      */
     long getMTNA();
 

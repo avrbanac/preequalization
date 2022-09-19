@@ -130,6 +130,7 @@ import java.util.List;
  */
 public class DefaultPreEqData implements PreEqData {
 
+    public static final int INPUT_STRING_LENGTH = 200;
     private static final int NIBBLE_CHECK_MASK = 0b1111_0000_0000_0000;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
@@ -201,6 +202,10 @@ public class DefaultPreEqData implements PreEqData {
             lMTE = coefficients.get(mainTapIndex - 1).getEnergy();
             lPreMTE = calculateEnergyForTaps(1, mainTapIndex - 1);
             lPostMTE = calculateEnergyForTaps(mainTapIndex + 1, TAP_COUNT);
+            if (lPreMTE + lPostMTE == 0L || lPostMTE == 0L) {
+                throw new PreEqException("Error in decoding, this would produce division by zero");
+            }
+
             lTTE = lPreMTE + lMTE + lPostMTE;
             dMTC = 10 * Math.log10(1d * lTTE / lMTE);
             dMTR = 10 * Math.log10(1d * lMTE / (lPreMTE + lPostMTE));
@@ -212,6 +217,9 @@ public class DefaultPreEqData implements PreEqData {
 
             lMTNA = Math.round(Math.pow(2, Math.ceil(Math.log(Math.sqrt(lTTE)) / Math.log(2))) - 1);
             lMTNE = lMTNA * lMTNA;
+        } catch (PreEqException e) {
+            // just rethrow already defined error
+            throw e;
         } catch (Exception e) {
             throw new PreEqException(e.getMessage());
         }

@@ -6,8 +6,15 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 ## Unreleased
 
-At the moment, application is under development.
 Lib part is missing TDR calculation and group correlation analysis.
+
+## v0.2.2 @avrbanac - not a module anymore, app added
+
+### Added
+- complete app view with table (parsed coefficients), metrics, bar chart (taps), and line chart (ICFR)
+
+### Removed
+- module-info.java from project
 
 ## v0.2.1 @avrbanac - app WIP
 

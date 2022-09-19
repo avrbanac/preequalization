@@ -5,15 +5,19 @@ import hr.avrbanac.docsis.lib.struct.PreEqData;
 import hr.avrbanac.docsis.lib.struct.Coefficient;
 import hr.avrbanac.docsis.lib.struct.DefaultCoefficient;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
+import hr.avrbanac.docsis.lib.util.ParsingUtility;
 import org.apache.commons.math3.util.Precision;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 class PreEqDataTest {
     private static final Logger LOG = LoggerFactory.getLogger(PreEqDataTest.class);
-    private static final String TAP_FORMAT = "%3d  |%4x%3x%3x%3x  |%6d%5d  |%11d  |%13.4f";
+    private static final String TAP_FORMAT = "%3d  |   %s  %s  |%6d%5d  |%11d  |%13.4f";
     private static final String RATIO_FORMAT =
             "RATIO: [MTC: %.3f dB, MTR: %.3f dB, NMTER: %.3f dB, preMTTER: %.3f dB, postMTTER: %.3f dB, PPESR: %.3f dB, PPTSR: %.3f dB]";
     private static final byte[] INPUT_BYTES = new byte[]{
@@ -85,7 +89,8 @@ class PreEqDataTest {
                     tap.getIndex() == ped.getMainTapIndex() ? "m>" : "  ",
                     String.format(TAP_FORMAT,
                             tap.getIndex(),
-                            b[0], b[1], b[2], b[3],
+                            ParsingUtility.byteArrayToHexString(b, 0, 2),
+                            ParsingUtility.byteArrayToHexString(b, 2, 4),
                             tap.getReal(), tap.getImag(),
                             tap.getEnergy(), tap.getEnergyRatio(ped.getMTNE())));
         });
