@@ -8,7 +8,6 @@ import hr.avrbanac.docsis.lib.util.ParsingUtility;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableView;
@@ -18,7 +17,6 @@ import javafx.scene.control.TextField;
 import java.util.List;
 
 public class PreEqualizationController {
-    private static final String CHART_SERIES_SELECTOR = ".chart-series-line";
     @FXML
     private TextField preEqStringInput;
     @FXML
@@ -26,7 +24,7 @@ public class PreEqualizationController {
     @FXML
     private TextArea metricsTextArea;
     @FXML
-    private BarChart<String, Double> tapsBarChart;
+    private FixedStackedBarChart<String, Double> tapsBarChart;
     @FXML
     private LineChart<String, Double> icfrLineChart;
 
@@ -42,18 +40,8 @@ public class PreEqualizationController {
             coefficientTable.setItems(getTableCoefficients(preEqData));
             metricsTextArea.setText(ParsingUtility.preEqDataToMetricsToString(preEqData));
 
-            tapsBarChart.setData(getBarChartData(preEqData));
-            for (int i = 0; i < preEqData.getTapCount(); i++) {
-                tapsBarChart.lookup(".data"+ i +".chart-bar").setStyle("-fx-bar-fill: #2caede");
-            }
-
+            tapsBarChart.getData().addAll(getBarChartData(preEqData));
             icfrLineChart.setData(getICFRChartData(preEqData));
-            icfrLineChart.getData().get(0).getNode().lookup(CHART_SERIES_SELECTOR).setStyle("-fx-stroke: #2caede");
-            icfrLineChart.getData().get(1).getNode().lookup(CHART_SERIES_SELECTOR).setStyle("-fx-stroke: #58b758");
-            icfrLineChart.getData().get(2).getNode().lookup(CHART_SERIES_SELECTOR).setStyle("-fx-stroke: #58b758");
-            icfrLineChart.getData().get(3).getNode().lookup(CHART_SERIES_SELECTOR).setStyle("-fx-stroke: #fba81d");
-            icfrLineChart.getData().get(4).getNode().lookup(CHART_SERIES_SELECTOR).setStyle("-fx-stroke: #fba81d");
-
         } else {
             preEqStringInput.clear();
         }
@@ -77,47 +65,60 @@ public class PreEqualizationController {
         return tableCoefficients;
     }
 
+    /**
+     * Returns stacked barchart data (for taps graph) with filled series. It needs to be stacked barchart instead of barchart since there is
+     * no easy way to show negative values from bottom to top with barchart. This problem is solved by using stacked graph. There is an
+     * invisible bar over each visible tap bar, spanning all the way up to the zero (Y value).
+     * @param preEqData {@link PreEqData} provided parsed pre-eq data
+     * @return {@link ObservableList} of {@link XYChart.Series}
+     */
     private ObservableList<XYChart.Series<String, Double>> getBarChartData(final PreEqData preEqData) {
         long lMTNE = preEqData.getMTNE();
-        ObservableList<XYChart.Series<String, Double>> barData = FXCollections.observableArrayList();
-        XYChart.Series<String, Double> series = new XYChart.Series<>();
-        barData.add(series);
+        ObservableList<XYChart.Series<String, Double>> barData = createChartSeries(2);
 
-        preEqData.getCoefficients().forEach(coefficient ->
-                series.getData().add(
-                        new XYChart.Data<>(
-                                String.valueOf(coefficient.getIndex()),
-                                60d + Math.max(coefficient.getEnergyRatio(lMTNE), -60.0d))));
+        preEqData.getCoefficients().forEach(coefficient -> {
+            double value = Math.max(coefficient.getEnergyRatio(lMTNE), -60.0d);
+            String index = String.valueOf(coefficient.getIndex());
+            barData.get(0).getData().add(new XYChart.Data<>(index, value));
+            barData.get(1).getData().add(new XYChart.Data<>(index, -60 - value));
+        });
 
         return barData;
     }
 
     /**
-     * Calculates ICFR data {@link PreEqAnalysis#getInChannelFrequencyResponseMagnitude()} for provided {@link PreEqData}. Suppressed
-     * warning for unchecked generic array creation for varargs parameter since there is a clear definition of what will be added to
-     * line data.
-     * @param preEqData {@link PreEqData} provided validate and parsed pre-eq data
+     * Returns line chart data (for ICFR graph) with filled series. Instead of coloring parts of line chart's background, colored additional
+     * line boundaries are added to chart.
+     * @param preEqData {@link PreEqData} provided parsed pre-eq data
      * @return {@link ObservableList} of {@link XYChart.Series}
      */
-    @SuppressWarnings("unchecked")
     private ObservableList<XYChart.Series<String, Double>> getICFRChartData(final PreEqData preEqData) {
         double[] icfrPoints = new PreEqAnalysis(preEqData).getInChannelFrequencyResponseMagnitude();
-        ObservableList<XYChart.Series<String, Double>> lineData = FXCollections.observableArrayList();
-        XYChart.Series<String, Double> series0 = new XYChart.Series<>();
-        XYChart.Series<String, Double> series1 = new XYChart.Series<>();
-        XYChart.Series<String, Double> series2 = new XYChart.Series<>();
-        XYChart.Series<String, Double> series3 = new XYChart.Series<>();
-        XYChart.Series<String, Double> series4 = new XYChart.Series<>();
-        lineData.addAll(series0, series1, series2, series3, series4);
+        ObservableList<XYChart.Series<String, Double>> lineData = createChartSeries(5);
+
 
         for (int i = 0; i < icfrPoints.length; i++) {
-            series0.getData().add(new XYChart.Data<>(String.valueOf(i), icfrPoints[i]));
-            series1.getData().add(new XYChart.Data<>(String.valueOf(i), 1d));
-            series2.getData().add(new XYChart.Data<>(String.valueOf(i), -1d));
-            series3.getData().add(new XYChart.Data<>(String.valueOf(i), 2d));
-            series4.getData().add(new XYChart.Data<>(String.valueOf(i), -2d));
+            lineData.get(0).getData().add(new XYChart.Data<>(String.valueOf(i), icfrPoints[i]));
+            lineData.get(1).getData().add(new XYChart.Data<>(String.valueOf(i), 1d));
+            lineData.get(2).getData().add(new XYChart.Data<>(String.valueOf(i), -1d));
+            lineData.get(3).getData().add(new XYChart.Data<>(String.valueOf(i), 2d));
+            lineData.get(4).getData().add(new XYChart.Data<>(String.valueOf(i), -2d));
         }
 
         return lineData;
+    }
+
+    /**
+     * Helper method to fill up chart data with series.
+     * @param numberOfSeries int number of series to be added to chart data
+     * @return {@link ObservableList} of {@link XYChart.Series}
+     */
+    ObservableList<XYChart.Series<String, Double>> createChartSeries(final int numberOfSeries) {
+        ObservableList<XYChart.Series<String, Double>> data = FXCollections.observableArrayList();
+        for (int i = 0; i < numberOfSeries; i++) {
+            data.add(new XYChart.Series<>());
+        }
+
+        return data;
     }
 }

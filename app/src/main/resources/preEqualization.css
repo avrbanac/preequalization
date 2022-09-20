@@ -1,0 +1,21 @@
+.default-color0.chart-bar {
+    visibility:hidden;
+}
+.default-color1.chart-bar {
+    -fx-bar-fill: #2caede;
+}
+.default-color0.chart-series-line {
+    -fx-stroke: #2caede;
+}
+.default-color1.chart-series-line {
+    -fx-stroke: #58b758;
+}
+.default-color2.chart-series-line {
+    -fx-stroke: #58b758;
+}
+.default-color3.chart-series-line {
+    -fx-stroke: #fba81d;
+}
+.default-color4.chart-series-line {
+    -fx-stroke: #fba81d;
+}

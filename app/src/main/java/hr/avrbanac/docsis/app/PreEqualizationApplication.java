@@ -11,6 +11,7 @@ public class PreEqualizationApplication extends Application {
     public void start(final Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(PreEqualizationApplication.class.getResource("/views/preeq-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1024, 768);
+        scene.getStylesheets().add("preEqualization.css");
         stage.setTitle("PreEqualization");
         stage.setScene(scene);
         stage.setResizable(false);
