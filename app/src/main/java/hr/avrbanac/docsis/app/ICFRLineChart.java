@@ -1,53 +1,69 @@
 package hr.avrbanac.docsis.app;
 
+import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
+import hr.avrbanac.docsis.lib.struct.PreEqData;
 import javafx.beans.NamedArg;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 /**
  * Extended version of the {@link LineChart} since there is a need for partial background color fill and line chart does not support that
  * feature.
- * @param <X>
- * @param <Y>
  */
-public class ICFRLineChart <X, Y> extends LineChart<X, Y> {
+public class ICFRLineChart extends LineChart<String, Double> {
 
     /**
      * The only needed CTOR for the current implementation.
-     * @param xAxis {@link Axis} X axis
-     * @param yAxis {@link Axis} Y axis
+     * @param xAxis {@link Axis} axis ({@link String} values)
+     * @param yAxis {@link Axis} axis ({@link Double} values)
      */
     public ICFRLineChart(
-            @NamedArg("xAxis") final Axis<X> xAxis,
-            @NamedArg("yAxis") final Axis<Y> yAxis) {
+            @NamedArg("xAxis") final Axis<String> xAxis,
+            @NamedArg("yAxis") final Axis<Double> yAxis) {
 
         super(xAxis, yAxis);
     }
 
     /**
-     * Overloaded method will plot original data but also background polygons. This class should be used for specific purpose (plotting out
-     * ICFR graph), thus making suppressed warnings for unchecked cast ok.
+     * Sets line chart data (for ICFR graph) with filled series.
+     * @param preEqData {@link PreEqData} provided parsed pre-eq data
      */
-    @SuppressWarnings("unchecked")
+    public void setICFRData(final PreEqData preEqData) {
+        double[] icfrPoints = new PreEqAnalysis(preEqData).getInChannelFrequencyResponseMagnitude();
+        float increment = 1f / (icfrPoints.length - 1);
+        ObservableList<XYChart.Series<String, Double>> lineData = FXCollections.observableArrayList();
+        XYChart.Series<String, Double> series = new XYChart.Series<>();
+        lineData.add(series);
+        for (int i = 0; i < icfrPoints.length; i++) {
+            series.getData().add(new XYChart.Data<>(String.format("%.2f", -0.5f + increment * i), icfrPoints[i]));
+        }
+
+        setData(lineData);
+    }
+
+    /**
+     * Overloaded method will plot original data but also background polygons.
+     */
     @Override
     protected void layoutPlotChildren() {
         super.layoutPlotChildren();
-        Axis<String> xAxis = ((Axis<String>) getXAxis());
-        Axis<Double> yAxis = ((Axis<Double>) getYAxis());
+
         if (getData().size() != 0) {
-            Series<String, Double> series = (Series<String, Double>) getData().get(0);
+            Series<String, Double> series = getData().get(0);
             ObservableList<Data<String, Double>> listOfData = series.getData();
-            double x0 = xAxis.getDisplayPosition(listOfData.get(0).getXValue());
-            double width = xAxis.getDisplayPosition(listOfData.get(31).getXValue()) - x0;
-            double y4p = yAxis.getDisplayPosition(4d);
-            double y2p = yAxis.getDisplayPosition(2d);
-            double y1p = yAxis.getDisplayPosition(1d);
-            double y1n = yAxis.getDisplayPosition(-1d);
-            double y2n = yAxis.getDisplayPosition(-2d);
-            double y4n = yAxis.getDisplayPosition(-4d);
+            double x0 = getXAxis().getDisplayPosition(listOfData.get(0).getXValue());
+            double width = getXAxis().getDisplayPosition(listOfData.get(listOfData.size() - 1).getXValue()) - x0;
+            double y4p = getYAxis().getDisplayPosition(4d);
+            double y2p = getYAxis().getDisplayPosition(2d);
+            double y1p = getYAxis().getDisplayPosition(1d);
+            double y1n = getYAxis().getDisplayPosition(-1d);
+            double y2n = getYAxis().getDisplayPosition(-2d);
+            double y4n = getYAxis().getDisplayPosition(-4d);
 
             Rectangle recRed1 = new Rectangle(x0, y4p, width, y2p - y4p);
             recRed1.setFill(Color.RED);
@@ -65,6 +81,11 @@ public class ICFRLineChart <X, Y> extends LineChart<X, Y> {
                 rectangle.setOpacity(0.1d);
                 rectangle.toBack();
                 getPlotChildren().add(rectangle);
+            }
+            ObservableList<Axis.TickMark<String>> tickMarks = getXAxis().getTickMarks();
+            int size = tickMarks.size();
+            for (int i = 0; i < size; i++) {
+                tickMarks.get(i).setTextVisible((i < size / 2 && i % 2 == 0) || (i > size / 2 && i % 2 == 1));
             }
         }
     }

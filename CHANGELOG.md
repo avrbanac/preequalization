@@ -8,6 +8,22 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 Lib part is missing TDR calculation and group correlation analysis.
 
+## v0.3.1 @avrbanac
+
+### Fixed
+- moved all specific chart logic to custom classes (graph classes)
+- fixed generics to types that make sense for pre-eq data
+
+### Removed
+- revision from parent pom (kept making build problems) versions are now manually maintained
+
+## V0.3.1 @avrbanac
+
+### Fixed
+- moved all chart logic from controller to the specific chart class
+- simplified chart structure (now generics are defined since type of data is well known)
+- line chart x-axis is now properly labeled
+
 ## v0.3.0 @avrbanac - 20220921
 
 App is now functional. It is intended for the use with default implementation of 24 tap pre-eq string. At this point it is unnecessary to
