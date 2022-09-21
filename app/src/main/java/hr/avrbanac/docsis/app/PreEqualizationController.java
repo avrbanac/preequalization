@@ -8,11 +8,15 @@ import hr.avrbanac.docsis.lib.util.ParsingUtility;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 
 import java.util.List;
 
@@ -22,9 +26,11 @@ public class PreEqualizationController {
     @FXML
     private TableView<TableCoefficient> coefficientTable;
     @FXML
-    private TextArea metricsTextArea;
+    private VBox leftTextVBox;
     @FXML
-    private FixedStackedBarChart<String, Double> tapsBarChart;
+    private VBox rightTextVBox;
+    @FXML
+    private TapBarChart<String, Double> tapsBarChart;
     @FXML
     private LineChart<String, Double> icfrLineChart;
 
@@ -38,12 +44,67 @@ public class PreEqualizationController {
             PreEqData preEqData = new DefaultPreEqData(inputString);
 
             coefficientTable.setItems(getTableCoefficients(preEqData));
-            metricsTextArea.setText(ParsingUtility.preEqDataToMetricsToString(preEqData));
+            addMetricsToVBoxes(preEqData);
 
-            tapsBarChart.getData().addAll(getBarChartData(preEqData));
+            tapsBarChart.setData(getBarChartData(preEqData));
             icfrLineChart.setData(getICFRChartData(preEqData));
         } else {
             preEqStringInput.clear();
+        }
+    }
+
+    /**
+     * Helper method to fill up both {@link VBox} with metrics text.
+     * @param preEqData {@link PreEqData} provided parsed pre-eq data
+     */
+    private void addMetricsToVBoxes(final PreEqData preEqData) {
+        Text title = new Text("Key metrics:");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        VBox.setMargin(title, new Insets(0, 0, 10, 0));
+        leftTextVBox.getChildren().setAll(title);
+
+        Text invisibleTitle = new Text("");
+        invisibleTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        VBox.setMargin(invisibleTitle, new Insets(0, 0, 10, 0));
+        rightTextVBox.getChildren().setAll(invisibleTitle);
+
+        Text[] keys = new Text[] {
+                new Text("MTE (main tap energy):"),
+                new Text("MTNA (main tap nominal amplitude):"),
+                new Text("MTNE (main tap nominal energy):"),
+                new Text("preMTE (pre-main tap energy):"),
+                new Text("postMTE (post-main tap energy):"),
+                new Text("TTE (total tap energy):"),
+                new Text("MTC (main tap compression):"),
+                new Text("MTR (main tap ratio):"),
+                new Text("NMTER (non-main tap to total energy):"),
+                new Text("preMTTER (pre-main tap to total energy):"),
+                new Text("postMTTER (post-main tap to total energy):"),
+                new Text("PPESR (pre-post energy symetry ratio):"),
+                new Text("PPTSR (pre-post tap symetry ratio):")
+        };
+        for (Text text : keys) {
+            VBox.setMargin(text, new Insets(0, 0, 0, 10));
+            leftTextVBox.getChildren().add(text);
+        }
+
+        Text[] values = new Text[] {
+                new Text(String.valueOf(preEqData.getMTE())),
+                new Text(String.valueOf(preEqData.getMTNA())),
+                new Text(String.valueOf(preEqData.getMTNE())),
+                new Text(String.valueOf(preEqData.getPreMTE())),
+                new Text(String.valueOf(preEqData.getPostMTE())),
+                new Text(String.valueOf(preEqData.getTTE())),
+                new Text(preEqData.getMTC() + " dB"),
+                new Text(preEqData.getMTR() + " dB"),
+                new Text(preEqData.getNMTER() + " dB"),
+                new Text(preEqData.getPreMTTER() + " dB"),
+                new Text(preEqData.getPostMTTER() + " dB"),
+                new Text(preEqData.getPPESR() + " dB"),
+                new Text(preEqData.getPPTSR() + " dB"),
+        };
+        for (Text text : values) {
+            rightTextVBox.getChildren().add(text);
         }
     }
 
@@ -94,15 +155,10 @@ public class PreEqualizationController {
      */
     private ObservableList<XYChart.Series<String, Double>> getICFRChartData(final PreEqData preEqData) {
         double[] icfrPoints = new PreEqAnalysis(preEqData).getInChannelFrequencyResponseMagnitude();
-        ObservableList<XYChart.Series<String, Double>> lineData = createChartSeries(5);
-
+        ObservableList<XYChart.Series<String, Double>> lineData = createChartSeries(1);
 
         for (int i = 0; i < icfrPoints.length; i++) {
-            lineData.get(0).getData().add(new XYChart.Data<>(String.valueOf(i), icfrPoints[i]));
-            lineData.get(1).getData().add(new XYChart.Data<>(String.valueOf(i), 1d));
-            lineData.get(2).getData().add(new XYChart.Data<>(String.valueOf(i), -1d));
-            lineData.get(3).getData().add(new XYChart.Data<>(String.valueOf(i), 2d));
-            lineData.get(4).getData().add(new XYChart.Data<>(String.valueOf(i), -2d));
+            lineData.get(0).getData().add(new XYChart.Data<>(String.valueOf(i + 1), icfrPoints[i]));
         }
 
         return lineData;

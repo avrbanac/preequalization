@@ -8,6 +8,14 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 Lib part is missing TDR calculation and group correlation analysis.
 
+## v0.3.0 @avrbanac - 20220921
+
+App is now functional. It is intended for the use with default implementation of 24 tap pre-eq string. At this point it is unnecessary to
+support scaling for large number of taps.
+
+### Fixed
+- now using custom linechart and custom stacked barchart (with additional plot elements) instead of original FX versions
+
 ## v0.2.3 @avrbanac - corrected app graphs
 
 ### Added
@@ -16,6 +24,7 @@ Lib part is missing TDR calculation and group correlation analysis.
 ### Fixed
 - switched from barchart to stacked barchart so that dB tap graph can be shown in negative values all the way to the zero for the main tap
 - fixed broken javafx stacked barchart so that it can correctly show negative values (explained in the FixedStackedBarChart class)
+- metrics are shown in hBox with two columns (vBoxes)
 
 ## v0.2.2 @avrbanac - not a module anymore, app added
 

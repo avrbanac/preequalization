@@ -2,13 +2,11 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -17,80 +15,109 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<?import hr.avrbanac.docsis.app.FixedStackedBarChart?>
+<?import hr.avrbanac.docsis.app.TapBarChart?>
+<?import hr.avrbanac.docsis.app.ICFRLineChart?>
+
 <VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="hr.avrbanac.docsis.app.PreEqualizationController"
       maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0">
 
     <HBox spacing="10.0">
         <VBox.margin>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
         </VBox.margin>
-        <TextField fx:id="preEqStringInput" promptText="24-tap pre-equalization string" HBox.hgrow="ALWAYS" />
-        <Button mnemonicParsing="false" onAction="#onCalculateClick" text="Calculate" />
+        <TextField fx:id="preEqStringInput" promptText="24-tap pre-equalization string" HBox.hgrow="ALWAYS"/>
+        <Button mnemonicParsing="false" onAction="#onCalculateClick" text="Calculate"/>
     </HBox>
     <GridPane hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
         <VBox.margin>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
         </VBox.margin>
         <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
         </columnConstraints>
         <rowConstraints>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
         </rowConstraints>
         <TableView fx:id="coefficientTable" prefHeight="200.0" prefWidth="200.0">
             <columns>
                 <TableColumn prefWidth="45.0" text="Tap #">
-                    <cellValueFactory><PropertyValueFactory property="tapIndex" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="tapIndex"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="55.0" text="RealB">
-                    <cellValueFactory><PropertyValueFactory property="realBytes" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="realBytes"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="55.0" text="ImagB">
-                    <cellValueFactory><PropertyValueFactory property="imagBytes" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="imagBytes"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="50.0" text="Real">
-                    <cellValueFactory><PropertyValueFactory property="realDec" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="realDec"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="50.0" text="Imag">
-                    <cellValueFactory><PropertyValueFactory property="imagDec" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="imagDec"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="76.0" text="RealRPwr">
-                    <cellValueFactory><PropertyValueFactory property="realRelPwr" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="realRelPwr"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="76.0" text="ImagRPwr">
-                    <cellValueFactory><PropertyValueFactory property="imagRelPwr" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="imagRelPwr"/>
+                    </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="76.0" text="Energy Ratio">
-                    <cellValueFactory><PropertyValueFactory property="energyRatio" /></cellValueFactory>
+                    <cellValueFactory>
+                        <PropertyValueFactory property="energyRatio"/>
+                    </cellValueFactory>
                 </TableColumn>
             </columns>
         </TableView>
-        <FixedStackedBarChart fx:id="tapsBarChart" animated="false" categoryGap="2.0" legendVisible="false" GridPane.rowIndex="1">
+        <TapBarChart fx:id="tapsBarChart" animated="false" categoryGap="2.0" legendVisible="false" GridPane.rowIndex="1">
             <xAxis>
-                <CategoryAxis animated="false" label="Taps" side="BOTTOM" />
+                <CategoryAxis animated="false" label="Taps" side="BOTTOM"/>
             </xAxis>
             <yAxis>
-                <NumberAxis animated="false" autoRanging="false" label="dB" side="LEFT" lowerBound="-60" upperBound="0" />
+                <NumberAxis animated="false" autoRanging="false" label="dB" lowerBound="-60" side="LEFT" upperBound="0"/>
             </yAxis>
-        </FixedStackedBarChart>
-        <LineChart fx:id="icfrLineChart" GridPane.columnIndex="1" GridPane.rowIndex="1"
-                   animated="false" createSymbols="false" legendVisible="false">
+        </TapBarChart>
+        <ICFRLineChart fx:id="icfrLineChart" animated="false" createSymbols="false" legendVisible="false" GridPane.columnIndex="1"
+                       GridPane.rowIndex="1">
             <xAxis>
-                <CategoryAxis animated="false" side="BOTTOM" />
+                <CategoryAxis animated="false" side="BOTTOM"/>
             </xAxis>
             <yAxis>
-                <NumberAxis animated="false" autoRanging="false" lowerBound="-4" side="LEFT" upperBound="4" />
+                <NumberAxis animated="false" autoRanging="false" lowerBound="-4" side="LEFT" upperBound="4"/>
             </yAxis>
-        </LineChart>
-      <TextArea fx:id="metricsTextArea" editable="false" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" />
+        </ICFRLineChart>
+        <HBox prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" style="-fx-border-width: 1; -fx-border-style: solid;">
+            <VBox fx:id="leftTextVBox" prefHeight="200.0" prefWidth="100.0" spacing="5.0" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                </padding>
+            </VBox>
+            <VBox fx:id="rightTextVBox" prefHeight="200.0" prefWidth="100.0" spacing="5.0" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                </padding>
+            </VBox>
+        </HBox>
     </GridPane>
-    <Label text="Current version: v0.2.2 (fx app under construction)">
+    <Label text="Current version: v0.3.0">
         <VBox.margin>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
         </VBox.margin>
     </Label>
 </VBox>
