@@ -4,25 +4,40 @@ All notable changes to 'Pre-equalization project' will be documented in this fil
 
 Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principles.
 
-## Unreleased
+## Unreleased / TODO
 
-Lib part is missing TDR calculation and group correlation analysis.
+- Needs more testing with different pre-eq strings
 
-## v0.3.1 @avrbanac
+## v0.3.2 @avrbanac
+
+### Added
+- channel width enumeration for TDR analysis
+- rounding for app data (table and key metrics)
+- TDR calculation (time-domain reflectometry)
+- math utility helper class
+- selector for channel width
+- TDR calculation added to application as another metrics datum
+- ICFR now shows correct x-axis values
+- now there is a default pre-eq string already entered (faster testing purposes)
 
 ### Fixed
-- moved all specific chart logic to custom classes (graph classes)
-- fixed generics to types that make sense for pre-eq data
+- default selection in app is focused on calculate button
+- removed additionally added, overlapping graphical elements from custom charts
+- MTNA calculation upgraded for cases that went one scale higher than the real values should (new algorithm added and documented)
+- unit tests are organized via BookTest class, making it easy to add additional testing by simply adding new tests (values) to arrays
 
 ### Removed
-- revision from parent pom (kept making build problems) versions are now manually maintained
+- hardcoded values for window definition (width, height, title...); moved to separate configuration class (maybe do the properties file?)
 
-## V0.3.1 @avrbanac
+## v0.3.1 @avrbanac
 
 ### Fixed
 - moved all chart logic from controller to the specific chart class
 - simplified chart structure (now generics are defined since type of data is well known)
 - line chart x-axis is now properly labeled
+
+### Removed
+- revision from parent pom (kept making build problems) versions are now manually maintained
 
 ## v0.3.0 @avrbanac - 20220921
 

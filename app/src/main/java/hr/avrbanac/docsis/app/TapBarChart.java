@@ -12,7 +12,9 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Original {@link StackedBarChart} class is currently broken. It works fine with positive values, but negative values tend to be
@@ -23,6 +25,11 @@ import java.util.List;
  */
 public class TapBarChart extends StackedBarChart<String, Double> {
 
+    /**
+     * This list of added lines is here to make sure all the additional lines added to chart are removed before adding new ones.
+     * If app is reused (calculating/plotting multiple pre-eq strings), this mechanism makes sure there are no overlapping/leaking objects.
+     */
+    private final List<Line> addedLines = new ArrayList<>();
     private double nearMicroreflectionBoundary = -25d;
     private double farMicroreflectionBoundary = -35d;
     private int numberOfNearTaps = 2;
@@ -162,7 +169,16 @@ public class TapBarChart extends StackedBarChart<String, Double> {
                         new Line(x1 + offset, y0, x1 + offset, y1),
                         new Line(x1 + offset, y1, x2 + offset, y1)
                 };
+
+                ListIterator<Line> iterator = addedLines.listIterator();
+                while(iterator.hasNext()){
+                    Line line = iterator.next();
+                    getPlotChildren().remove(line);
+                    iterator.remove();
+                }
+
                 for (Line line : lines) {
+                    addedLines.add(line);
                     getPlotChildren().add(line);
                     line.toFront();
                     line.setStroke(Color.RED);

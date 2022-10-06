@@ -1,5 +1,7 @@
 package hr.avrbanac.docsis.app;
 
+import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
+import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
 import hr.avrbanac.docsis.lib.struct.Coefficient;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.struct.PreEqData;
@@ -10,16 +12,21 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import org.apache.commons.math3.util.Precision;
 
 import java.util.List;
 
 public class PreEqualizationController {
+    public static final int ROUND_SCALE = 5;
     @FXML
     private TextField preEqStringInput;
+    @FXML
+    private ToggleGroup channelWidthGroup;
     @FXML
     private TableView<TableCoefficient> coefficientTable;
     @FXML
@@ -31,20 +38,24 @@ public class PreEqualizationController {
     @FXML
     private ICFRLineChart icfrLineChart;
 
+    private ChannelWidth channelWidth = ChannelWidth.CW_US_6_4;
+
     /**
      * Plotting for this app happens only after pre-eq string has been provided. That is why it is safe to apply lookup inline styling to
      * the charts since css has already been parsed and applied.
      */
     public void onCalculateClick() {
         String inputString = preEqStringInput.getText();
+        channelWidth = ChannelWidth.valueOf(channelWidthGroup.getSelectedToggle().getUserData().toString());
         if (ParsingUtility.isPreEqStringValid(inputString, DefaultPreEqData.INPUT_STRING_LENGTH)) {
             PreEqData preEqData = new DefaultPreEqData(inputString);
+            PreEqAnalysis preEqAnalysis = new PreEqAnalysis(preEqData);
 
             coefficientTable.setItems(getTableCoefficients(preEqData));
-            addMetricsToVBoxes(preEqData);
+            addMetricsToVBoxes(preEqData, preEqAnalysis.getTDR(channelWidth, 2, false));
 
             tapsBarChart.setBarChartData(preEqData);
-            icfrLineChart.setICFRData(preEqData);
+            icfrLineChart.setICFRData(preEqAnalysis.getInChannelFrequencyResponseMagnitude(), channelWidth.getValue());
         } else {
             preEqStringInput.clear();
         }
@@ -54,15 +65,18 @@ public class PreEqualizationController {
      * Helper method to fill up both {@link VBox} with metrics text.
      * @param preEqData {@link PreEqData} provided parsed pre-eq data
      */
-    private void addMetricsToVBoxes(final PreEqData preEqData) {
+    private void addMetricsToVBoxes(
+            final PreEqData preEqData,
+            final double tdr) {
+
         Text title = new Text("Key metrics:");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        VBox.setMargin(title, new Insets(0, 0, 10, 0));
+        VBox.setMargin(title, new Insets(0, 0, 5, 0));
         leftTextVBox.getChildren().setAll(title);
 
         Text invisibleTitle = new Text("");
         invisibleTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        VBox.setMargin(invisibleTitle, new Insets(0, 0, 10, 0));
+        VBox.setMargin(invisibleTitle, new Insets(0, 0, 5, 0));
         rightTextVBox.getChildren().setAll(invisibleTitle);
 
         Text[] keys = new Text[] {
@@ -78,27 +92,29 @@ public class PreEqualizationController {
                 new Text("preMTTER (pre-main tap to total energy):"),
                 new Text("postMTTER (post-main tap to total energy):"),
                 new Text("PPESR (pre-post energy symetry ratio):"),
-                new Text("PPTSR (pre-post tap symetry ratio):")
+                new Text("PPTSR (pre-post tap symetry ratio):"),
+                new Text("TDR (time domain reflectometry - (" + channelWidth.getValue() + " Mhz)):")
         };
         for (Text text : keys) {
             VBox.setMargin(text, new Insets(0, 0, 0, 10));
             leftTextVBox.getChildren().add(text);
         }
 
-        Text[] values = new Text[] {
+        Text[] values = new Text[]{
                 new Text(String.valueOf(preEqData.getMTE())),
                 new Text(String.valueOf(preEqData.getMTNA())),
                 new Text(String.valueOf(preEqData.getMTNE())),
                 new Text(String.valueOf(preEqData.getPreMTE())),
                 new Text(String.valueOf(preEqData.getPostMTE())),
                 new Text(String.valueOf(preEqData.getTTE())),
-                new Text(preEqData.getMTC() + " dB"),
-                new Text(preEqData.getMTR() + " dB"),
-                new Text(preEqData.getNMTER() + " dB"),
-                new Text(preEqData.getPreMTTER() + " dB"),
-                new Text(preEqData.getPostMTTER() + " dB"),
-                new Text(preEqData.getPPESR() + " dB"),
-                new Text(preEqData.getPPTSR() + " dB"),
+                new Text(Precision.round(preEqData.getMTC(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getMTR(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getNMTER(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getPreMTTER(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getPostMTTER(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getPPESR(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(preEqData.getPPTSR(), ROUND_SCALE) + " dB"),
+                new Text(Precision.round(tdr, 2) + " m")
         };
         for (Text text : values) {
             rightTextVBox.getChildren().add(text);
@@ -117,7 +133,7 @@ public class PreEqualizationController {
 
         ObservableList<TableCoefficient> tableCoefficients = FXCollections.observableArrayList();
         for (int i = 0; i < coefficients.size(); i++) {
-            tableCoefficients.add(new TableCoefficient(coefficients.get(i),i + 1, lMTNA, lMTNE));
+            tableCoefficients.add(new TableCoefficient(coefficients.get(i),i + 1, lMTNA, lMTNE, ROUND_SCALE));
         }
 
         return tableCoefficients;

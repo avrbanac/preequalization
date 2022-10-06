@@ -15,6 +15,8 @@ public class PreEqException extends RuntimeException {
     public static final PreEqException WRONG_TAP_COUNT = new PreEqException(ErrorClass.WRONG_TAP_COUNT);
     public static final PreEqException STRING_NOT_BYTE_REPRESENTATION = new PreEqException(ErrorClass.STRING_NOT_BYTE_REPRESENTATION);
     public static final PreEqException FFT_TAP_COUNT_ERROR = new PreEqException(ErrorClass.FFT_TAP_COUNT_ERROR);
+    public static final PreEqException TDR_CALCULATION_ERROR = new PreEqException(ErrorClass.TDR_CALCULATION_ERROR);
+    public static final PreEqException TEST_ERROR = new PreEqException(ErrorClass.TEST_ERROR);
 
     private final ErrorClass errorClass;
 
@@ -81,6 +83,12 @@ public class PreEqException extends RuntimeException {
          */
         FFT_TAP_COUNT_ERROR(3001,
                 "PreEqualization tap count too large for FFT calculation, parsed structure wrong?"),
+
+        TDR_CALCULATION_ERROR(3002,
+                "Error occurred while trying to calculate TDR (couldn't find max MR tap), probably defective tap structure"),
+
+        TEST_ERROR (Integer.MAX_VALUE,
+                "Error occurred while trying to create test structure, this is not part of the production code")
 
         ;
 

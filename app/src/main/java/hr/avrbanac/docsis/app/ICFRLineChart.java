@@ -1,7 +1,5 @@
 package hr.avrbanac.docsis.app;
 
-import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
-import hr.avrbanac.docsis.lib.struct.PreEqData;
 import javafx.beans.NamedArg;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,11 +9,21 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+
 /**
  * Extended version of the {@link LineChart} since there is a need for partial background color fill and line chart does not support that
  * feature.
  */
 public class ICFRLineChart extends LineChart<String, Double> {
+    /**
+     * This list of added rectangles is here to make sure all the additional rectangles added to chart are removed before adding new ones.
+     * If app is reused (calculating/plotting multiple pre-eq strings), this mechanism makes sure there are no overlapping transparent
+     * leaking objects.
+     */
+    private final List<Rectangle> addedRectangles = new ArrayList<>();
 
     /**
      * The only needed CTOR for the current implementation.
@@ -31,16 +39,18 @@ public class ICFRLineChart extends LineChart<String, Double> {
 
     /**
      * Sets line chart data (for ICFR graph) with filled series.
-     * @param preEqData {@link PreEqData} provided parsed pre-eq data
+     * @param icfrPoints array of doubles with provided parsed pre-eq data after FFT analysis
      */
-    public void setICFRData(final PreEqData preEqData) {
-        double[] icfrPoints = new PreEqAnalysis(preEqData).getInChannelFrequencyResponseMagnitude();
-        float increment = 1f / (icfrPoints.length - 1);
+    public void setICFRData(
+            final double[] icfrPoints,
+            final float channelWidth) {
+
+        float increment = channelWidth / (icfrPoints.length - 1);
         ObservableList<XYChart.Series<String, Double>> lineData = FXCollections.observableArrayList();
         XYChart.Series<String, Double> series = new XYChart.Series<>();
         lineData.add(series);
         for (int i = 0; i < icfrPoints.length; i++) {
-            series.getData().add(new XYChart.Data<>(String.format("%.2f", -0.5f + increment * i), icfrPoints[i]));
+            series.getData().add(new XYChart.Data<>(String.format("%.2f", -1f * channelWidth / 2 + increment * i), icfrPoints[i]));
         }
 
         setData(lineData);
@@ -77,9 +87,17 @@ public class ICFRLineChart extends LineChart<String, Double> {
             recGrn0.setFill(Color.GREEN);
             Rectangle[] rectangles = new Rectangle[]{recRed1, recRed2, recYel1, recYel2, recGrn0};
 
+            ListIterator<Rectangle> iterator = addedRectangles.listIterator();
+            while(iterator.hasNext()) {
+                Rectangle rectangle = iterator.next();
+                getPlotChildren().remove(rectangle);
+                iterator.remove();
+            }
+
             for (Rectangle rectangle : rectangles) {
                 rectangle.setOpacity(0.1d);
                 rectangle.toBack();
+                addedRectangles.add(rectangle);
                 getPlotChildren().add(rectangle);
             }
             ObservableList<Axis.TickMark<String>> tickMarks = getXAxis().getTickMarks();

@@ -40,6 +40,7 @@ public class DefaultCoefficient implements Coefficient {
     private static final int NIBBLE_MASK    = 0b0000_1111_1111_1111;
     private static final int LOWER_INT_MASK = 0x00_00_ff_ff;
     private static final int BYTE_MASK      = 0x00_00_00_ff;
+    private static final double TAP_ENERGY_RATIO_BOUNDARY = -100d;
 
     /**
      * Size in bytes for the real portion of the complex coefficient.
@@ -159,8 +160,7 @@ public class DefaultCoefficient implements Coefficient {
      */
     @Override
     public double getEnergyRatio(final long lMTNE) {
-        double energyRatio = 10 * Math.log10(1d * energy / lMTNE);
-        return Math.max(energyRatio, -100d);
+        return Math.max(10 * Math.log10(1d * energy / lMTNE), TAP_ENERGY_RATIO_BOUNDARY);
     }
 
     /**
@@ -177,6 +177,14 @@ public class DefaultCoefficient implements Coefficient {
     @Override
     public double getRelativePowerImag(final long lMTNA) {
         return 1.0d * imag / lMTNA;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getTapEnergyRatioBoundary() {
+        return TAP_ENERGY_RATIO_BOUNDARY;
     }
 
     /**

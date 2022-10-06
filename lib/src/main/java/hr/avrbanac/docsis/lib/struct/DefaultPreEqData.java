@@ -129,11 +129,11 @@ import java.util.List;
  * </table>
  */
 public class DefaultPreEqData implements PreEqData {
-
     public static final int INPUT_STRING_LENGTH = 200;
     private static final int NIBBLE_CHECK_MASK = 0b1111_0000_0000_0000;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
+    private static final double BORDER_DIFF_PERC = 0.0005d;
 
     /**
      * Normalized pre-eq input string.
@@ -169,6 +169,7 @@ public class DefaultPreEqData implements PreEqData {
     private final double dPostMTTER;
     private final double dPPESR;
     private final double dPPTSR;
+    private final double tapEnergyRatioBoundary;
 
     public DefaultPreEqData(final String rawInputPreEqString) {
         long start = System.nanoTime();
@@ -199,7 +200,9 @@ public class DefaultPreEqData implements PreEqData {
         }
 
         try {
-            lMTE = coefficients.get(mainTapIndex - 1).getEnergy();
+            Coefficient mainTap = coefficients.get(mainTapIndex - 1);
+            tapEnergyRatioBoundary = mainTap.getTapEnergyRatioBoundary();
+            lMTE = mainTap.getEnergy();
             lPreMTE = calculateEnergyForTaps(1, mainTapIndex - 1);
             lPostMTE = calculateEnergyForTaps(mainTapIndex + 1, TAP_COUNT);
             if (lPreMTE + lPostMTE == 0L || lPostMTE == 0L) {
@@ -215,7 +218,7 @@ public class DefaultPreEqData implements PreEqData {
             dPPESR = 10 * Math.log10(1d * lPreMTE / lPostMTE);
             dPPTSR = 10 * Math.log10(1d * coefficients.get(mainTapIndex - 2).getEnergy() / coefficients.get(mainTapIndex).getEnergy());
 
-            lMTNA = Math.round(Math.pow(2, Math.ceil(Math.log(Math.sqrt(lTTE)) / Math.log(2))) - 1);
+            lMTNA = calculateMTNA(lTTE);
             lMTNE = lMTNA * lMTNA;
         } catch (PreEqException e) {
             // just rethrow already defined error
@@ -392,6 +395,14 @@ public class DefaultPreEqData implements PreEqData {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getTapEnergyRatioBoundary() {
+        return tapEnergyRatioBoundary;
+    }
+
+    /**
      * Checks whole provided byte array for leading (fourth) nibble of each real / imaginary part of the complex coefficient. Only if all
      * checked nibbles are zero can 3-nibble decoding be used.
      * @param bytes provided array
@@ -404,5 +415,32 @@ public class DefaultPreEqData implements PreEqData {
         }
 
         return true;
+    }
+
+    /**
+     * This empiric helper method returns calculated main tap nominal energy value. It should be a value that is <strong>2^n - 1</strong>.
+     * From available documentation, usual values are 511, 1023, 2047; but in practice we see values like 32767 often. Keeping this
+     * calculation in a separate method is intentional, since the math behind it is not clear. Approximate value could be calculated as a
+     * sqrt of TTE. Formula found online is more precise but not 100% correct (there are some pre-eq strings that gave wrong MTNA value).
+     * This happens, as it seems, when quotient of ln(sqrt(tte))/ln(2) is just a little above the integer value. Using Math.ceil gives next
+     * integer, and taking 2 to the power of that increased number is landing whole scale above the correct value for MTNA.
+     *
+     * <p>
+     * New calculation (algorithm) will use old calculation only as a top boundary for iteration process of finding the correct value. In
+     * other words, if new calculation fails, old one will kick in. Finding the correct MTNA value will start with
+     * <strong>2^8 - 1 = 511</strong>.
+     * </p>
+     * @param lTTE long total tap energy
+     * @return long calculated MTNA (main tap nominal energy)
+     */
+    private long calculateMTNA(final long lTTE) {
+        double nearValue = Math.sqrt(lTTE);
+        long oldCalculation = Math.round(Math.pow(2, Math.ceil(Math.log(nearValue) / Math.log(2))) - 1);
+
+        for (long i = (2L << 8) - 1; i < oldCalculation; i = ((i + 1) << 1) - 1) {
+            if (Math.abs(1d * i - nearValue ) / nearValue < BORDER_DIFF_PERC) return i;
+        }
+
+        return oldCalculation;
     }
 }
