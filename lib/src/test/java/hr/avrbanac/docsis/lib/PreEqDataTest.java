@@ -2,6 +2,7 @@ package hr.avrbanac.docsis.lib;
 
 import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
 import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
+import hr.avrbanac.docsis.lib.analysis.Signature;
 import hr.avrbanac.docsis.lib.struct.PreEqData;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.util.MathUtility;
@@ -95,6 +96,10 @@ class PreEqDataTest {
             for (int i = 0; i < icfr.length; i++) {
                 Assertions.assertEquals(expectedICFR[i], Precision.round(icfr[i],4));
             }
+            Signature signature = pea.getSignature();
+            LOG.info("Signature: {}", signature);
+            Assertions.assertEquals(testStructure.getMicroReflection(), Precision.round(signature.getMicroReflection(), 3));
+            Assertions.assertEquals(testStructure.getSeverity(), signature.getMicroReflectionSeverity().getName());
         });
     }
 

@@ -20,6 +20,8 @@ public class TestPreEqStructure {
     private final double dPPTSR;
     private final double dTDR;
     private final double[] daICFR;
+    private final double microReflection;
+    private final String severity;
 
     /**
      * Private CTOR - too many parameters (unorganized!!!). Using builder pattern instead.
@@ -44,6 +46,8 @@ public class TestPreEqStructure {
         this.dPPTSR = builder.dPPTSR;
         this.dTDR = builder.dTDR;
         this.daICFR = builder.daICFR;
+        this.microReflection = builder.microReflection;
+        this.severity = builder.severity;
     }
 
     public String getPreEqString() {
@@ -122,6 +126,14 @@ public class TestPreEqStructure {
         return daICFR;
     }
 
+    public double getMicroReflection() {
+        return microReflection;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
     public static class Builder {
         private String preEqString;
         private int mainTapIndex;
@@ -142,12 +154,15 @@ public class TestPreEqStructure {
         private double dPPTSR;
         private double dTDR;
         private double[] daICFR;
+        private double microReflection;
+        private String severity;
         private final boolean[] initialized = {
                 false, false, false, false,
                 false, false, false, false,
                 false, false, false, false,
                 false, false, false, false,
-                false, false, false};
+                false, false, false, false,
+                false};
 
         public Builder setPreEqString(final String preEqString) {
             this.preEqString = preEqString;
@@ -171,6 +186,19 @@ public class TestPreEqStructure {
             this.coefficientPerSymbol = coefficientPerSymbol;
             this.initialized[3] = true;
             return this;
+        }
+
+        public Builder setPreEqData(
+                final String preEqString,
+                final int mainTapIndex,
+                final int tapCount,
+                final int coefficientPerSymbol) {
+
+            return this
+                    .setPreEqString(preEqString)
+                    .setMainTapIndex(mainTapIndex)
+                    .setTapCount(tapCount)
+                    .setCoefficientPerSymbol(coefficientPerSymbol);
         }
 
         public Builder setlMTE(final long lMTE) {
@@ -207,6 +235,23 @@ public class TestPreEqStructure {
             this.lTTE = lTTE;
             this.initialized[9] = true;
             return this;
+        }
+
+        public Builder setLongMetrics(
+                final long lMTE,
+                final long lMTNA,
+                final long lMTNE,
+                final long lPreMTE,
+                final long lPostMTE,
+                final long lTTE) {
+
+            return this
+                    .setlMTE(lMTE)
+                    .setlMTNA(lMTNA)
+                    .setlMTNE(lMTNE)
+                    .setlPreMTE(lPreMTE)
+                    .setlPostMTE(lPostMTE)
+                    .setlTTE(lTTE);
         }
 
         public Builder setdMTC(final double dMTC) {
@@ -251,6 +296,25 @@ public class TestPreEqStructure {
             return this;
         }
 
+        public Builder setDBMetrics(
+                final double dMTC,
+                final double dMTR,
+                final double dNMTER,
+                final double dPreMTTER,
+                final double dPostMTTER,
+                final double dPPESR,
+                final double dPPTSR) {
+
+            return this
+                    .setdMTC(dMTC)
+                    .setdMTR(dMTR)
+                    .setdNMTER(dNMTER)
+                    .setdPreMTTER(dPreMTTER)
+                    .setdPostMTTER(dPostMTTER)
+                    .setdPPESR(dPPESR)
+                    .setdPPTSR(dPPTSR);
+        }
+
         public Builder setdTDR(final double dTDR) {
             this.dTDR = dTDR;
             this.initialized[17] = true;
@@ -261,6 +325,25 @@ public class TestPreEqStructure {
             this.daICFR = daICFR;
             this.initialized[18] = true;
             return this;
+        }
+
+        public Builder setMicroReflection(final double microReflection) {
+            this.microReflection = microReflection;
+            this.initialized[19] = true;
+            return this;
+        }
+
+        public Builder setSeverity(final String severity) {
+            this.severity = severity;
+            this.initialized[20] = true;
+            return this;
+        }
+
+        public Builder setSignature(
+                final double microReflection,
+                final String severity) {
+
+            return this.setMicroReflection(microReflection).setSeverity(severity);
         }
 
         public TestPreEqStructure build() {

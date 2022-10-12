@@ -2,6 +2,7 @@ package hr.avrbanac.docsis.app;
 
 import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
 import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
+import hr.avrbanac.docsis.lib.analysis.Signature;
 import hr.avrbanac.docsis.lib.struct.Coefficient;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.struct.PreEqData;
@@ -10,10 +11,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -22,6 +26,7 @@ import org.apache.commons.math3.util.Precision;
 import java.util.List;
 
 public class PreEqualizationController {
+    private static final String FONT_FAMILY = "Arial";
     public static final int ROUND_SCALE = 5;
     @FXML
     private TextField preEqStringInput;
@@ -37,6 +42,8 @@ public class PreEqualizationController {
     private TapBarChart tapsBarChart;
     @FXML
     private ICFRLineChart icfrLineChart;
+    @FXML
+    private Label signature;
 
     private ChannelWidth channelWidth = ChannelWidth.CW_US_6_4;
 
@@ -56,6 +63,8 @@ public class PreEqualizationController {
 
             tapsBarChart.setBarChartData(preEqData);
             icfrLineChart.setICFRData(preEqAnalysis.getInChannelFrequencyResponseMagnitude(), channelWidth.getValue());
+
+            addMRSeverity(preEqAnalysis);
         } else {
             preEqStringInput.clear();
         }
@@ -70,12 +79,12 @@ public class PreEqualizationController {
             final double tdr) {
 
         Text title = new Text("Key metrics:");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        title.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 14));
         VBox.setMargin(title, new Insets(0, 0, 5, 0));
         leftTextVBox.getChildren().setAll(title);
 
         Text invisibleTitle = new Text("");
-        invisibleTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        invisibleTitle.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 14));
         VBox.setMargin(invisibleTitle, new Insets(0, 0, 5, 0));
         rightTextVBox.getChildren().setAll(invisibleTitle);
 
@@ -137,5 +146,27 @@ public class PreEqualizationController {
         }
 
         return tableCoefficients;
+    }
+
+    /**
+     * Helper method to deal with MR and severity label.
+     * @param preEqAnalysis {@link PreEqAnalysis} needed as severity data
+     */
+    private void addMRSeverity(final PreEqAnalysis preEqAnalysis) {
+        Signature preEqSignature = preEqAnalysis.getSignature();
+        int severity = preEqSignature.getMicroReflectionSeverity().getLevel();
+        signature.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 12));
+        signature.setTextFill(calculateSeverityColor(severity));
+        signature.setText(String.format("Severity: %s, calculated micro-reflection: %.2f",
+                preEqSignature.getMicroReflectionSeverity().getName(),
+                preEqSignature.getMicroReflection()));
+    }
+
+    private Color calculateSeverityColor(final int severity) {
+        switch (severity) {
+            case 2: return Color.DARKRED;
+            case 1: return Color.GOLDENROD;
+            default: return Color.DARKGREEN;
+        }
     }
 }

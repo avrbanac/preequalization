@@ -6,7 +6,18 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 ## Unreleased / TODO
 
-- Needs more testing with different pre-eq strings
+- correlation algorithm
+
+## v0.3.3 @avrbanac
+
+### Added
+- signature structure as basis for the correlation calculation (with micro-reflection and severity)
+- micro-reflection severity enums
+- app icons (64x64, 32x32, 16x16 sizes)
+- some quality of life testing builder methods
+
+### Tested
+- new calculations
 
 ## v0.3.2 @avrbanac
 
@@ -25,6 +36,10 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 - removed additionally added, overlapping graphical elements from custom charts
 - MTNA calculation upgraded for cases that went one scale higher than the real values should (new algorithm added and documented)
 - unit tests are organized via BookTest class, making it easy to add additional testing by simply adding new tests (values) to arrays
+
+### Tested
+- new way of testing: there is a test book with all test data defined in one place
+- it is now very easy to add additional test structures to test book using predefined structures
 
 ### Removed
 - hardcoded values for window definition (width, height, title...); moved to separate configuration class (maybe do the properties file?)

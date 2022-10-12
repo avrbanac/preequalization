@@ -6,7 +6,7 @@
 
     <groupId>hr.avrbanac.docsis</groupId>
     <artifactId>preequalization</artifactId>
-    <version>0.3.2</version>
+    <version>0.3.3</version>
     <packaging>pom</packaging>
 
     <properties>
