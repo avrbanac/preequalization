@@ -33,12 +33,46 @@ public class MathUtility {
             final Complex middle,
             final Complex right) {
 
-        double diff = left.getImaginary() - right.getImaginary();
+        double diff = left.getImaginary() - right.getImaginary(); //v2
         double a = (left.getImaginary() - 2 * middle.getImaginary() + right.getImaginary()) / 2;
         double xm = diff / (4 * a);
         double ym = (-1d * (diff * diff)) / (16 * a);
 
         return new Complex(middle.getReal() + xm, middle.getImaginary() + ym);
+    }
+
+    /**
+     * Another method for parabolic interpolation (found in third party pre-eq software).
+     * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
+     * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
+     * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
+     * @return double value of the X point (interpolated)
+     */
+    public static double calculateParabolicInterpolationXPoint(
+            final Complex left,
+            final Complex middle,
+            final Complex right) {
+
+        double x1 = left.getReal();
+        double y1 = left.getImaginary();
+        double x2 = middle.getReal();
+        double y2 = middle.getImaginary();
+        double x3 = right.getReal();
+        double y3 = right.getImaginary();
+
+        double u1 = x1 * x1 - x2 * x2;
+        double u2 = x1 * x1 - x3 * x3;
+
+        double v1 = x1 - x2;
+        double v2 = x1 - x3;
+
+        double w1 = y1 - y2;
+        double w2 = y1 - y3;
+
+        double k1 = u1 / v1 - u2 / v2;
+        double m1 = w1 / v1 - w2 / v2;
+
+        return -0.5d * (w2 * k1 / v2 / m1 - u2 / v2);
     }
 
     /**

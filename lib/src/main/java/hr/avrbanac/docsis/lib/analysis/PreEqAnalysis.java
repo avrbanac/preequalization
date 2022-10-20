@@ -132,11 +132,11 @@ public class PreEqAnalysis {
      * <p>
      * Calculation will be carried out with the highest post-main tap using hyperbolic interpolation. For this interpolation process, 3
      * points will be used: the highest MR tap, closest left and closest right tap value. Exception to this rule is calculating
-     * interpolation for first post-main tap since we cannot use previous one as left point (main tap is maxed out). Instead, last pre-main
-     * tap will be used with according x-axis value (2 places offset instead of just one). Similarly, last post-main tap has no right point,
-     * so imaginary right point with the same value as that to the right of the last one will be used, effectively fixing calculation to the
-     * middle of the last tap. This will lower the precision of calculating interpolation for the last energy tap. (This is the last tap and
-     * the time dilatation is the longest, so lowering the precision is not so big of a problem.)
+     * interpolation for first post-main tap since the previous one cannot be used as left point (main tap is maxed out). Instead,
+     * last pre-main tap will be used with according x-axis value (2 places offset instead of just one). Similarly, last post-main tap has
+     * no right point, so imaginary right point with the same value as that to the right of the last one will be used, effectively fixing
+     * calculation to the middle of the last tap. This will lower the precision of calculating interpolation for the last energy tap.
+     * (This is the last tap and the time dilatation is the longest, so lowering the precision is not so big of a problem.)
      * </p>
      *
      * @param channelWidth {@link ChannelWidth} carrying the information about width of the channel and symbol rate
@@ -154,12 +154,12 @@ public class PreEqAnalysis {
         int tapCount = preEqData.getTapCount();
         double maxReflection = preEqData.getTapEnergyRatioBoundary();
         List<Coefficient> coefficients = preEqData.getCoefficients();
-        long lMTNE = preEqData.getMTNE();
+        long tte = preEqData.getTTE();
         int ptr = onlyFarReflections ? mainTapIndex + nearPostMainTapCount : mainTapIndex;
         int maxTapPtr = 0;
 
         while (ptr < tapCount) {
-            double currTapEnergyRatio = coefficients.get(ptr).getEnergyRatio(lMTNE);
+            double currTapEnergyRatio = coefficients.get(ptr).getEnergyRatio(tte);
             if (currTapEnergyRatio > maxReflection) {
                 maxReflection = currTapEnergyRatio;
                 maxTapPtr = ptr;
@@ -169,11 +169,11 @@ public class PreEqAnalysis {
 
         if (maxTapPtr <= mainTapIndex - 1) throw PreEqException.TDR_CALCULATION_ERROR;
 
-        Complex left = getLeftInterpolationPoint(coefficients, maxTapPtr, mainTapIndex - 1);
-        Complex middle = new Complex(maxTapPtr + 1d, coefficients.get(maxTapPtr).getImag());
-        Complex right = getRightInterpolationPoint(coefficients, maxTapPtr, tapCount);
-        Complex interpolated = MathUtility.calculateParabolicInterpolation(left, middle, right);
-        double result = (interpolated.getReal() - mainTapIndex) * MathUtility.getTDRSpeedFactor(channelWidth.getSymRate());
+        Complex left = getLeftInterpolationPoint(coefficients, maxTapPtr, mainTapIndex, tte);
+        Complex middle = new Complex(maxTapPtr - mainTapIndex + 1d, coefficients.get(maxTapPtr).getEnergyRatio(tte));
+        Complex right = getRightInterpolationPoint(coefficients, maxTapPtr, mainTapIndex, tapCount, tte);
+
+        double result = calculateInterpolatedTDR(left, middle, right, channelWidth.getSymRate());
         elapsedTime += System.nanoTime() - start;
 
         return result;
@@ -256,17 +256,19 @@ public class PreEqAnalysis {
      * one after the main tap. Then the calculation is done with the one left of the main tap taking into account it's fixed position.
      * @param coefficients {@link List} of the {@link Coefficient} with all the taps
      * @param middlePtr int an array index of the coefficient with max MR
-     * @param mainTapIndexPtr int an index array of the main tap
+     * @param mainTapIndex main tap index (not an array index)
+     * @param tte long value of the total tap energy
      * @return {@link Complex} wrapper for left interpolation point
      */
     private Complex getLeftInterpolationPoint(
             final List<Coefficient> coefficients,
             final int middlePtr,
-            final int mainTapIndexPtr) {
+            final int mainTapIndex,
+            final long tte) {
 
-        return middlePtr == mainTapIndexPtr + 1
-                ? new Complex(middlePtr - 1d, coefficients.get(middlePtr - 2).getImag())
-                : new Complex(middlePtr, coefficients.get(middlePtr - 1).getImag());
+        return middlePtr == mainTapIndex
+                ? new Complex(middlePtr - mainTapIndex - 1d, coefficients.get(middlePtr - 2).getEnergyRatio(tte))
+                : new Complex(middlePtr - mainTapIndex * 1d, coefficients.get(middlePtr - 1).getEnergyRatio(tte));
     }
 
     /**
@@ -277,16 +279,48 @@ public class PreEqAnalysis {
      * tap.
      * @param coefficients {@link List} of the {@link Coefficient} with all the taps
      * @param middlePtr int an array index of the coefficient with max MR
+     * @param mainTapIndex main tap index (not an array index)
      * @param tapCount int total tap count
+     * @param tte long value of the total tap energy
      * @return {@link Complex} wrapper for right interpolation point
      */
     private Complex getRightInterpolationPoint(
             final List<Coefficient> coefficients,
             final int middlePtr,
-            final int tapCount) {
+            final int mainTapIndex,
+            final int tapCount,
+            final long tte) {
 
         return (middlePtr == tapCount - 1)
-                ? new Complex(middlePtr + 2d, coefficients.get(middlePtr - 1).getImag())
-                : new Complex(middlePtr + 2d, coefficients.get(middlePtr + 1).getImag());
+                ? new Complex(middlePtr - mainTapIndex + 2d, coefficients.get(middlePtr - 1).getEnergyRatio(tte))
+                : new Complex(middlePtr - mainTapIndex + 2d, coefficients.get(middlePtr + 1).getEnergyRatio(tte));
+    }
+
+    /**
+     * Helper method to interpolate and calculate TDR value from 3 points using parabolic interpolation. Method will also fix 3 point tilt
+     * (which will very likely generate either negative or very large positive value) and inverted concavity cases.
+     * There are 2 methods available for parabolic interpolation. Currently, using the one found in the third party pre-eq software.
+     * @param left {@link Complex} number representing left point with (real, imag) values
+     * @param middle {@link Complex} number representing middle point with (real, imag) values
+     * @param right {@link Complex} number representing right point with (real, imag) values
+     * @param symRate float symbol rate value needed for distance calculation
+     * @return double interpolated value fixed if needed (not to produce negative values)
+     * @see MathUtility#calculateParabolicInterpolation(Complex, Complex, Complex)
+     * @see MathUtility#calculateParabolicInterpolationXPoint(Complex, Complex, Complex)
+     */
+    private double calculateInterpolatedTDR(
+            final Complex left,
+            final Complex middle,
+            final Complex right,
+            final float symRate) {
+
+        double interpolated = MathUtility.calculateParabolicInterpolationXPoint(left, middle, right);
+
+        // find the tilt - this is very likely to be negative or very large positive value, or inverted concavity
+        if ((left.getImaginary() > middle.getImaginary() && middle.getImaginary() > right.getImaginary()) || (interpolated < 0)) {
+            interpolated = 1d;
+        }
+
+        return interpolated * MathUtility.getTDRSpeedFactor(symRate);
     }
 }

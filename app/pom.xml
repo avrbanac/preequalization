@@ -7,7 +7,7 @@
     <parent>
         <groupId>hr.avrbanac.docsis</groupId>
         <artifactId>preequalization</artifactId>
-        <version>0.3.3</version>
+        <version>0.3.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>hr.avrbanac.docsis</groupId>
             <artifactId>lib</artifactId>
-            <version>0.3.3</version>
+            <version>0.3.4</version>
         </dependency>
     </dependencies>
 
@@ -51,7 +51,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>hr.avrbanac.docsis.app/hr.avrbanac.docsis.app.PreEqualizationApplication</mainClass>
+                            <mainClass>hr.avrbanac.docsis.app.PreEqualizationApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

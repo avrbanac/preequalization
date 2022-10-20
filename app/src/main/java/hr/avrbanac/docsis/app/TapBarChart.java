@@ -85,7 +85,7 @@ public class TapBarChart extends StackedBarChart<String, Double> {
         barData.add(visibleSeries);
 
         preEqData.getCoefficients().forEach(coefficient -> {
-            double value = Math.max(coefficient.getEnergyRatio(lMTNE), -60.0d);
+            double value = Math.max(coefficient.getNominalEnergyRatio(lMTNE), -60.0d);
             String index = String.valueOf(coefficient.getIndex());
             invisibleSeries.getData().add(new XYChart.Data<>(index, value));
             visibleSeries.getData().add(new XYChart.Data<>(index, -60 - value));

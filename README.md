@@ -12,6 +12,10 @@ device needs to do with its "setup", it is possible, in a way, to go in a revers
 Calculated values and KPIs need to be presented in a more understandable way than just as a plain number values. This presentation is beyond
 this project, but app module accompanying preEq library can give a crude idea on how to do that.
 
+## JavaFX APP
+
+There are some specific information on how to run JavaFX APP in separate [APP README file](app/README.md).
+
 ## Official documentation
 
 Basic information can be found in this [README](README.md) file.

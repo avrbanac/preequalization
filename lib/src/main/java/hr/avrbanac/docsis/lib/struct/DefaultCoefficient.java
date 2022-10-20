@@ -158,8 +158,15 @@ public class DefaultCoefficient implements Coefficient {
     /**
      * {@inheritDoc}
      */
+    public double getEnergyRatio(final long lTTE) {
+        return Math.sqrt(1d * energy / lTTE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public double getEnergyRatio(final long lMTNE) {
+    public double getNominalEnergyRatio(final long lMTNE) {
         return Math.max(10 * Math.log10(1d * energy / lMTNE), TAP_ENERGY_RATIO_BOUNDARY);
     }
 

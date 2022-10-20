@@ -6,7 +6,6 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
 import java.util.Objects;
 
 import static hr.avrbanac.docsis.app.PreEqAppConfiguration.*;

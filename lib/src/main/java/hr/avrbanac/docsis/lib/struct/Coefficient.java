@@ -51,11 +51,18 @@ public interface Coefficient {
     long getEnergy();
 
     /**
-     * Returns calculated energy ratio of the current coefficient (tap) to the main tap nominal energy.
-     * @param lMTNE long value of calculated main tap nominal energy
-     * @return double value of the energy ratio (current to MTNE) in dB
+     * Returns calculated energy ratio of the current coefficient (tap) to the total tap energy.
+     * @param TTE long value of calculated total tap energy
+     * @return double value of the energy ratio (current to TTE) in dB
      */
-    double getEnergyRatio(final long lMTNE);
+    double getEnergyRatio(final long TTE);
+
+    /**
+     * Returns calculated nominal energy ratio of the current coefficient (tap) to the main tap nominal energy.
+     * @param lMTNE long value of calculated main tap nominal energy
+     * @return double value of the nominal energy ratio (current to MTNE) in dB
+     */
+    double getNominalEnergyRatio(final long lMTNE);
 
     /**
      * Returns coefficient index. This is an actual index and not an array index. For array access, use value of one less.
@@ -78,7 +85,7 @@ public interface Coefficient {
     double getRelativePowerImag(final long lMTNA);
 
     /**
-     * Returns the lowest boundary (minimal possible value) of the tap energy ratio that the {@link #getEnergyRatio(long)} method can
+     * Returns the lowest boundary (minimal possible value) of the tap energy ratio that the {@link #getNominalEnergyRatio(long)} method can
      * return.
      */
     double getTapEnergyRatioBoundary();

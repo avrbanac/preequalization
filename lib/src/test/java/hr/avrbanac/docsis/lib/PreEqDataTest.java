@@ -58,7 +58,7 @@ class PreEqDataTest {
                                 ParsingUtility.byteArrayToHexString(b, 0, 2),
                                 ParsingUtility.byteArrayToHexString(b, 2, 4),
                                 tap.getReal(), tap.getImag(),
-                                tap.getEnergy(), tap.getEnergyRatio(ped.getMTNE())));
+                                tap.getEnergy(), tap.getNominalEnergyRatio(ped.getMTNE())));
             });
 
             LOG.info("ENERGY: [MTE: {}, MTNA: {}, MTNE: {}, preMTE: {}, postMTE: {} TTE: {}]",
@@ -94,7 +94,7 @@ class PreEqDataTest {
             LOG.info("It took {} ns for FFT preparation and calculation.", pea.getElapsedTime());
             LOG.info("ICFR: {}", icfr);
             for (int i = 0; i < icfr.length; i++) {
-                Assertions.assertEquals(expectedICFR[i], Precision.round(icfr[i],4));
+                Assertions.assertEquals(expectedICFR[i], Precision.round(icfr[i], 4));
             }
             Signature signature = pea.getSignature();
             LOG.info("Signature: {}", signature);
@@ -111,8 +111,8 @@ class PreEqDataTest {
                     testParabolicInterpolation.getMiddlePoint(),
                     testParabolicInterpolation.getRightPoint());
             Complex expected = testParabolicInterpolation.getExpectedInterpolation();
-        Assertions.assertEquals(expected.getReal(), calculated.getReal());
-        Assertions.assertEquals(expected.getImaginary(), calculated.getImaginary());
+            Assertions.assertEquals(expected.getReal(), calculated.getReal());
+            Assertions.assertEquals(expected.getImaginary(), calculated.getImaginary());
         });
     }
 

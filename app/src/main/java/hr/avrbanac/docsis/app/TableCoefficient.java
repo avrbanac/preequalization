@@ -29,7 +29,7 @@ public class TableCoefficient {
         this.imagDec = coefficient.getImag();
         this.realRelPwr = String.format(formatting, coefficient.getRelativePowerReal(lMTNA));
         this.imagRelPwr =  String.format(formatting, coefficient.getRelativePowerImag(lMTNA));
-        this.energyRatio =  String.format(formatting, coefficient.getEnergyRatio(lMTNE));
+        this.energyRatio =  String.format(formatting, coefficient.getNominalEnergyRatio(lMTNE));
     }
 
     public int getTapIndex() {

@@ -8,6 +8,21 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 - correlation algorithm
 
+
+## v0.3.4 @avrbanac
+
+### Added
+- new parabolic interpolation method in MathUtility (gives better results)
+- new method to Coefficient interface (getEnergyRatio - since the one from before is in fact nominal variant)
+- documentation info on how to run APP (JavaFX module)
+
+### Fixed
+- small changes to app to address lib changes
+- renamed Coefficient getEnergyRatio method to getNominalEnergyRatio (since it is calculated with MTNE and not with TTE)
+- switched to simpler icons (looks a bit better with small ones)
+- TDR calculation fixed (used coefficient imaginary part instead of calculated getEnergyRatio value)
+- sanitized TDR results for negative tilt case and inverted concavity case
+
 ## v0.3.3 @avrbanac
 
 ### Added

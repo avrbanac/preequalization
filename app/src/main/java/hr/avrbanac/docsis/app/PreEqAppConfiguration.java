@@ -9,9 +9,9 @@ public class PreEqAppConfiguration {
     public static final int APP_HEIGHT = 768;
     public static final String APP_TITLE = "PreEqualization";
     public static final String APP_VIEW_FILE = "/views/preeq-view.fxml";
-    public static final String ICON_16_FILE = "/icons/preEqIcon16.png";
-    public static final String ICON_32_FILE = "/icons/preEqIcon32.png";
-    public static final String ICON_64_FILE = "/icons/preEqIcon64.png";
+    public static final String ICON_16_FILE = "/icons/Taps16.png";
+    public static final String ICON_32_FILE = "/icons/Taps32.png";
+    public static final String ICON_64_FILE = "/icons/Taps64.png";
     public static final String APP_CSS_FILE = "preEqualization.css";
 
     /**
