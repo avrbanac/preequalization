@@ -87,6 +87,7 @@ public interface Coefficient {
     /**
      * Returns the lowest boundary (minimal possible value) of the tap energy ratio that the {@link #getNominalEnergyRatio(long)} method can
      * return.
+     * @return double lowest boundary for energy tap ratio
      */
     double getTapEnergyRatioBoundary();
 }

@@ -40,6 +40,7 @@ public class ICFRLineChart extends LineChart<String, Double> {
     /**
      * Sets line chart data (for ICFR graph) with filled series.
      * @param icfrPoints array of doubles with provided parsed pre-eq data after FFT analysis
+     * @param channelWidth float value for the channel width in MHz
      */
     public void setICFRData(
             final double[] icfrPoints,

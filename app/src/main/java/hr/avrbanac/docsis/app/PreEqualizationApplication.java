@@ -10,6 +10,9 @@ import java.util.Objects;
 
 import static hr.avrbanac.docsis.app.PreEqAppConfiguration.*;
 
+/**
+ * Main entry point class for pre-eq java FX test application.
+ */
 public class PreEqualizationApplication extends Application {
 
     @Override

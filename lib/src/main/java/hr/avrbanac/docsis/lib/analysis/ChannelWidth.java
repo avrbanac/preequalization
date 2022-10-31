@@ -5,6 +5,9 @@ package hr.avrbanac.docsis.lib.analysis;
  */
 public enum ChannelWidth {
 
+    /**
+     * All data for US channel width of 3.2 MHz.
+     */
     CW_US_3_2(
             "3.2MHz",
             3.2f,
@@ -13,6 +16,9 @@ public enum ChannelWidth {
             6.250f
     ),
 
+    /**
+     * All data for US channel width of 6.4 MHz.
+     */
     CW_US_6_4(
             "6.4MHz",
             6.4f,

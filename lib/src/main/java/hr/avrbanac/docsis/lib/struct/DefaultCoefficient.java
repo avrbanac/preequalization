@@ -9,7 +9,7 @@ import hr.avrbanac.docsis.lib.PreEqException;
  * of 4 bytes). Each byte increment (2 bytes in total) represent one number value (real/imaginary part alternating). Each number value is
  * thus comprised of 16 bits which we can think of in terms of 4 nibbles of 4 bits.
  * </p>
- * <hr/>
+ * <hr>
  *
  * <h3>
  * Problem with different representations

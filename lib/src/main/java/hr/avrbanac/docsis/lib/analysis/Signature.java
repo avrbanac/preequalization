@@ -103,10 +103,18 @@ public class Signature {
         }
     }
 
+    /**
+     * Returns calculated micro-reflection from In Channel Frequency Response data.
+     * @return double value of the calculated micro-reflection
+     */
     public double getMicroReflection() {
         return microReflection;
     }
 
+    /**
+     * Returns calculated micro-reflection severity from In Channel Frequency Response data.
+     * @return {@link MicroReflectionSeverity} calculated from ICFR
+     */
     public MicroReflectionSeverity getMicroReflectionSeverity() {
         return microReflectionSeverity;
     }

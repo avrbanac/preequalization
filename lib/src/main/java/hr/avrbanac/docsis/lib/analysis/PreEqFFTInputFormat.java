@@ -8,7 +8,14 @@ package hr.avrbanac.docsis.lib.analysis;
  * points lower and vice verses.
  */
 public enum PreEqFFTInputFormat {
+    /**
+     * Format of the FFT input array will contain main tap value in the middle of the array with unused points zeroed.
+     */
     MAIN_TAP_MIDDLE (0),
+
+    /**
+     * Format of the FFT input array will contain first pre-main tap in the zero position of the array with unused points zeroed.
+     */
     FIRST_TAP_FIRST_POINT (2);
 
     private final int rotationFactor;

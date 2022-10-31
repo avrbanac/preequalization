@@ -8,8 +8,8 @@ package hr.avrbanac.docsis.lib.analysis;
  * modems switch to more robust modulation type such as 16-QAM (high noise?). This is a clear sign that something is broken, however metric
  * must change in pace with less demanding modulation type, or problem could be concealed.
  * </p>
- * <p>
  *     <table>
+ *         <caption>Mirco-reflection thresholds</caption>
  *         <tr>
  *             <th>Threshold Category</th>
  *             <th>Enumeration Value</th>
@@ -59,7 +59,6 @@ package hr.avrbanac.docsis.lib.analysis;
  *             <td>1</td>
  *         </tr>
  *     </table>
- * </p>
  */
 public enum MicroReflectionSeverityThreshold {
     // LOW threshold levels for use with newly established networks (new to the PNM idea).
@@ -83,6 +82,11 @@ public enum MicroReflectionSeverityThreshold {
         this.thresholdLevel = thresholdLevel;
     }
 
+    /**
+     * Returns quantified level for threshold. This enables to have more than just 3 enumeration values, but still provide only 3 levels of
+     * the threshold.
+     * @return int value of the threshold level
+     */
     public int getThresholdLevel() {
         return thresholdLevel;
     }

@@ -7,13 +7,16 @@ import hr.avrbanac.docsis.lib.struct.PreEqData;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.util.MathUtility;
 import hr.avrbanac.docsis.lib.util.ParsingUtility;
-import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Precision;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Main test class for pre-eq lib. This classes method will use {@link TestBook} with wrapped data to iterate it and run tests with all
+ * available data.
+ */
 class PreEqDataTest {
     private static final Logger LOG = LoggerFactory.getLogger(PreEqDataTest.class);
     private static final String TAP_FORMAT = "%3d  |   %s  %s  |%6d%5d  |%11d  |%13.4f";
@@ -28,6 +31,9 @@ class PreEqDataTest {
         });
     }
 
+    /**
+     * Method for testing pre-eq data structure. Some logging was added to enable this test to also be useful for data presentation.
+     */
     @Test
     void testDefaultPreEqData() {
 
@@ -84,6 +90,9 @@ class PreEqDataTest {
         });
     }
 
+    /**
+     * Method for testing pre-eq analysis. Minimal information set is provided for each test datum.
+     */
     @Test
     void testPreEqAnalysis() {
         TestBook.getPreEqTests().forEach(testStructure -> {
@@ -103,19 +112,23 @@ class PreEqDataTest {
         });
     }
 
+    /**
+     * Method for testing pre-eq parabolic interpolation algorithm. This test uses {@link MathUtility.ParabolicInterpolation#V1} only.
+     */
     @Test
     void testMathParabolicInterpolation() {
         TestBook.getParabolicInterpolations().forEach(testParabolicInterpolation -> {
-            Complex calculated = MathUtility.calculateParabolicInterpolation(
+            double calculated = MathUtility.ParabolicInterpolation.V1.calculate(
                     testParabolicInterpolation.getLeftPoint(),
                     testParabolicInterpolation.getMiddlePoint(),
                     testParabolicInterpolation.getRightPoint());
-            Complex expected = testParabolicInterpolation.getExpectedInterpolation();
-            Assertions.assertEquals(expected.getReal(), calculated.getReal());
-            Assertions.assertEquals(expected.getImaginary(), calculated.getImaginary());
+            Assertions.assertEquals(testParabolicInterpolation.getExpectedInterpolation(), calculated);
         });
     }
 
+    /**
+     * Method for testing TDR calculation. Test uses {@link MathUtility.ParabolicInterpolation#V2} only.
+     */
     @Test
     void testTDR() {
         TestBook.getPreEqTests().forEach(testStructure -> {

@@ -12,7 +12,7 @@ import java.util.List;
  * Default pre-equalization data class is a 24 energy tap implementation of the {@link PreEqData}. Coefficients of this class represent CM
  * complex coefficients F1 through F24 of the 24-tap linear transversal filter structure for the upstream equalizer.
  * </p>
- * <hr/>
+ * <hr>
  *
  * <h3>
  * PRE-EQ EXPLANATION (short version):
@@ -43,7 +43,7 @@ import java.util.List;
  * <p>
  * Historically, DOCSIS 1.0 and 1.1 had some problems with pre-eq but that is beyond the scope of this project.
  * </p>
- * <hr/>
+ * <hr>
  * <h3>
  * LIMITATION:
  * </h3>
@@ -55,6 +55,7 @@ import java.util.List;
  * </p>
  *
  * <table>
+ *     <caption>Symbol rates and periods</caption>
  *     <tr>
  *         <th>Symbol Rate [MHz]</th>
  *         <th>Symbol Period (T) [msecs]</th>
@@ -81,10 +82,10 @@ import java.util.List;
  * Given values are approximates. Depending on the type of the micro-reflection and energy dissipation across all taps, final limits can be
  * lower than table values.
  * </p>
- * <hr/>
+ * <hr>
  * <h3>
  * SOURCE OF INFORMATION:
- * </hr>
+ * </h3>
  *
  * <ul>
  *     <li>DOCS-IF-MIB (RFC4546)</li>
@@ -96,6 +97,7 @@ import java.util.List;
  * </p>
  *
  * <table>
+ *     <caption>Pre-equalization OIDs</caption>
  *     <tr>
  *         <th>MIB</th>
  *         <th>Target</th>
@@ -171,6 +173,10 @@ public class DefaultPreEqData implements PreEqData {
     private final double dPPTSR;
     private final double tapEnergyRatioBoundary;
 
+    /**
+     * The only CTOR available. All key metrics will be calculated in CTOR.
+     * @param rawInputPreEqString {@link String} provided raw pre-eq string
+     */
     public DefaultPreEqData(final String rawInputPreEqString) {
         long start = System.nanoTime();
         this.preEqString = rawInputPreEqString

@@ -21,6 +21,7 @@ public class PreEqAnalysis {
     private static final PreEqFFTInputFormat PRE_EQ_FFT_INPUT_FORMAT = PreEqFFTInputFormat.FIRST_TAP_FIRST_POINT;
     private static final int MIN_FFT_INPUT_SIZE = 8;
     private static final int MAX_FFT_INPUT_SIZE = 128;
+    private static final MathUtility.ParabolicInterpolation PARABOLIC_INTERPOLATION = MathUtility.ParabolicInterpolation.V2;
 
     /**
      * Parsed pre-eq data with calculated key metrics.
@@ -117,6 +118,22 @@ public class PreEqAnalysis {
     }
 
     /**
+     * Default overloaded method which initiates calculation with default parabolic interpolation defined for this class.
+     * @param channelWidth {@link ChannelWidth} carrying the information about width of the channel and symbol rate
+     * @param nearPostMainTapCount int count of the post-main energy taps considered near reflections
+     * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
+     * @return double TDR value representing distance between the strongest MR point and first strong downstream reflection point
+     * @see #getTDR(ChannelWidth, int, boolean, MathUtility.ParabolicInterpolation) 
+     */
+    public double getTDR(
+            final ChannelWidth channelWidth,
+            final int nearPostMainTapCount,
+            final boolean onlyFarReflections) {
+
+        return getTDR(channelWidth, nearPostMainTapCount, onlyFarReflections, PARABOLIC_INTERPOLATION);
+    }
+
+    /**
      * Time domain reflectometry calculation method.
      * <p>
      * When a propagating wave hits the impedance mismatch point, a micro-reflection (MR) occurs. This MR is reflected towards CM (wave
@@ -142,12 +159,14 @@ public class PreEqAnalysis {
      * @param channelWidth {@link ChannelWidth} carrying the information about width of the channel and symbol rate
      * @param nearPostMainTapCount int count of the post-main energy taps considered near reflections
      * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
+     * @param parabolicInterpolation {@link hr.avrbanac.docsis.lib.util.MathUtility.ParabolicInterpolation} used for max point determination
      * @return double TDR value representing distance between the strongest MR point and first strong downstream reflection point
      */
     public double getTDR(
             final ChannelWidth channelWidth,
             final int nearPostMainTapCount,
-            final boolean onlyFarReflections) {
+            final boolean onlyFarReflections,
+            final MathUtility.ParabolicInterpolation parabolicInterpolation) {
 
         long start = System.nanoTime();
         int mainTapIndex = preEqData.getMainTapIndex();
@@ -173,12 +192,16 @@ public class PreEqAnalysis {
         Complex middle = new Complex(maxTapPtr - mainTapIndex + 1d, coefficients.get(maxTapPtr).getEnergyRatio(tte));
         Complex right = getRightInterpolationPoint(coefficients, maxTapPtr, mainTapIndex, tapCount, tte);
 
-        double result = calculateInterpolatedTDR(left, middle, right, channelWidth.getSymRate());
+        double result = calculateInterpolatedTDR(left, middle, right, channelWidth.getSymRate(), parabolicInterpolation);
         elapsedTime += System.nanoTime() - start;
 
         return result;
     }
 
+    /**
+     * Returns {@link Signature} calculated using current pre-eq analysis.
+     * @return {@link Signature} with wrapped calculated micro-reflection and severity
+     */
     public Signature getSignature() {
         return getSignature(MicroReflectionSeverityThreshold.CABLE_LABS);
     }
@@ -305,16 +328,16 @@ public class PreEqAnalysis {
      * @param right {@link Complex} number representing right point with (real, imag) values
      * @param symRate float symbol rate value needed for distance calculation
      * @return double interpolated value fixed if needed (not to produce negative values)
-     * @see MathUtility#calculateParabolicInterpolation(Complex, Complex, Complex)
-     * @see MathUtility#calculateParabolicInterpolationXPoint(Complex, Complex, Complex)
+     * @see MathUtility.ParabolicInterpolation#calculate(Complex, Complex, Complex)
      */
     private double calculateInterpolatedTDR(
             final Complex left,
             final Complex middle,
             final Complex right,
-            final float symRate) {
+            final float symRate,
+            final MathUtility.ParabolicInterpolation interpolation) {
 
-        double interpolated = MathUtility.calculateParabolicInterpolationXPoint(left, middle, right);
+        double interpolated = interpolation.calculate(left, middle, right);
 
         // find the tilt - this is very likely to be negative or very large positive value, or inverted concavity
         if ((left.getImaginary() > middle.getImaginary() && middle.getImaginary() > right.getImaginary()) || (interpolated < 0)) {

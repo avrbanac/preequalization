@@ -24,6 +24,7 @@ public interface PreEqData extends PreEqHeader, PreEqMetrics {
      * Returns the lowest boundary (minimal possible value) of the tap energy ratio that the {@link Coefficient#getTapEnergyRatioBoundary()}
      * method can return. This method should just forward the same value unless the implementation has a superb reason to return some other
      * value.
+     * @return double lowest boundary for energy tap ratio
      */
     double getTapEnergyRatioBoundary();
 

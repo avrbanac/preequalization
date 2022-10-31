@@ -11,68 +11,95 @@ public class MathUtility {
     private MathUtility() { }
 
     /**
-     * Parabola equations with 3 provided points (x0,y0), (x1, y1), (x2, y2):
-     * <ul>
-     *     <li>y = a*x^2 + b*x + c</li>
-     *     <li>a = (y0 - 2*y1 + y2) / 2  (note: a should be negative or no peak exists)</li>
-     *     <li>b = (y2 - y0) / 2</li>
-     *     <li>c = y1</li>
-     *     <li>xm = (y0 - y2) / (4*a)</li>
-     *     <li>ym = -(y0 - y2)^2 / (16*a)</li>
-     *     <li>Xout = x1 + xm</li>
-     *     <li>Yout = y1 + ym</li>
-     * </ul>
-     * </p>
-     * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
-     * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
-     * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
-     * @return {@link Complex} complex number so (Xout, Yout) pair can be easily wrapped together
+     * Parabolic interpolation enumeration with 2 different implementations.
      */
-    public static Complex calculateParabolicInterpolation(
-            final Complex left,
-            final Complex middle,
-            final Complex right) {
+    public enum ParabolicInterpolation {
+        /**
+         * The algorithm was found in the official CableLabs documentation. It was unclear whether it should be used with tap energy ratio
+         * values or nominal energy ratio values. Since nominal energy ratio uses nominal energy instead the calculated real value, it seems
+         * that energy ratio is a better choice (more precise one).
+         * <ul>
+         *     <li>y = a*x^2 + b*x + c</li>
+         *     <li>a = (y0 - 2*y1 + y2) / 2  (note: a should be negative or no peak exists)</li>
+         *     <li>b = (y2 - y0) / 2</li>
+         *     <li>c = y1</li>
+         *     <li>xm = (y0 - y2) / (4*a)</li>
+         *     <li>ym = -(y0 - y2)^2 / (16*a)</li>
+         *     <li>Xout = x1 + xm</li>
+         *     <li>Yout = y1 + ym</li>
+         * </ul>
+         */
+        V1 {
+            /**
+             * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
+             * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
+             * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
+             * @return double value of the X point (interpolated) - real part of the complex number
+             */
+            @Override
+            public double doCalculate(Complex left, Complex middle, Complex right) {
+                double diff = left.getImaginary() - right.getImaginary(); //v2
+                double a = (left.getImaginary() - 2 * middle.getImaginary() + right.getImaginary()) / 2;
+                double xm = diff / (4 * a);
+                // this is needed only for y value: double ym = (-1d * (diff * diff)) / (16 * a)
 
-        double diff = left.getImaginary() - right.getImaginary(); //v2
-        double a = (left.getImaginary() - 2 * middle.getImaginary() + right.getImaginary()) / 2;
-        double xm = diff / (4 * a);
-        double ym = (-1d * (diff * diff)) / (16 * a);
+                return middle.getReal() + xm;
+            }
+        },
+        /**
+         * The algorithm was extrapolated from existing third party pre-eq software partially written by CableLabs. It seems that in the
+         * original code, energy ratio (calculated with TTE) was used instead of nominal values.
+         */
+        V2 {
+            /**
+             * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
+             * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
+             * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
+             * @return double value of the X point (interpolated) - real part of the complex number
+             */
+            @Override
+            public double doCalculate(Complex left, Complex middle, Complex right) {
+                double x1 = left.getReal();
+                double y1 = left.getImaginary();
+                double x2 = middle.getReal();
+                double y2 = middle.getImaginary();
+                double x3 = right.getReal();
+                double y3 = right.getImaginary();
 
-        return new Complex(middle.getReal() + xm, middle.getImaginary() + ym);
-    }
+                double u1 = x1 * x1 - x2 * x2;
+                double u2 = x1 * x1 - x3 * x3;
 
-    /**
-     * Another method for parabolic interpolation (found in third party pre-eq software).
-     * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
-     * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
-     * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
-     * @return double value of the X point (interpolated)
-     */
-    public static double calculateParabolicInterpolationXPoint(
-            final Complex left,
-            final Complex middle,
-            final Complex right) {
+                double v1 = x1 - x2;
+                double v2 = x1 - x3;
 
-        double x1 = left.getReal();
-        double y1 = left.getImaginary();
-        double x2 = middle.getReal();
-        double y2 = middle.getImaginary();
-        double x3 = right.getReal();
-        double y3 = right.getImaginary();
+                double w1 = y1 - y2;
+                double w2 = y1 - y3;
 
-        double u1 = x1 * x1 - x2 * x2;
-        double u2 = x1 * x1 - x3 * x3;
+                double k1 = u1 / v1 - u2 / v2;
+                double m1 = w1 / v1 - w2 / v2;
 
-        double v1 = x1 - x2;
-        double v2 = x1 - x3;
+                return -0.5d * (w2 * k1 / v2 / m1 - u2 / v2);
+            }
+        };
 
-        double w1 = y1 - y2;
-        double w2 = y1 - y3;
+        abstract double doCalculate(final Complex left, final Complex middle, final Complex right);
 
-        double k1 = u1 / v1 - u2 / v2;
-        double m1 = w1 / v1 - w2 / v2;
+        /**
+         * Calculates Parabolic interpolation with one of the implementations.
+         * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
+         * @param middle middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
+         * @param right right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
+         * @return double value of the X point (interpolated) - real part of the complex number
+         * @see ParabolicInterpolation#V1
+         * @see ParabolicInterpolation#V2
+         */
+        public double calculate(
+                final Complex left,
+                final Complex middle,
+                final Complex right) {
 
-        return -0.5d * (w2 * k1 / v2 / m1 - u2 / v2);
+            return this.doCalculate(left, middle, right);
+        }
     }
 
     /**
@@ -80,6 +107,11 @@ public class MathUtility {
      * {@link PreEqFFTInputFormat} there are two methods of calculating this size. For case where main tap needs to be located in the middle
      * of the FFT input array, more complex algorithm is used. If input points are just sequentially positioned taps, it is only important
      * for this size to be greater than the total tap count.
+     * @param tapCount int total number of taps
+     * @param mainTapIndex int main tap index (not an array index)
+     * @param preEqFFTInputFormat {@link PreEqFFTInputFormat} definition on how to fill up FFT input with tap data
+     * @param minFFTInputSize int minimum test size for algorithm
+     * @param maxFFTInputSize int maximum test size for algorithm
      * @return int min size of FFT input array or -1 if it could not be calculated between provided min and max FFT input size
      * @see PreEqFFTInputFormat
      */

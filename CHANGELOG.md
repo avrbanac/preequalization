@@ -8,6 +8,18 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 - correlation algorithm
 
+## v0.3.5 @avrbanac
+
+### Added
+- javadoc for packages
+- javadoc to methods that were missing documentation
+- javadoc to test classes
+
+### Fixed
+- organized parabolic interpolation in a way that both algorithms are available for calculation
+- app updated to address changes to lib
+- javadoc lint errors
+
 
 ## v0.3.4 @avrbanac
 

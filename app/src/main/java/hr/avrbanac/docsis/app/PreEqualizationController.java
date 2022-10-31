@@ -25,6 +25,9 @@ import org.apache.commons.math3.util.Precision;
 
 import java.util.List;
 
+/**
+ * Main (the only) java FX controller addressed by java FXML; used for test application.
+ */
 public class PreEqualizationController {
     private static final String FONT_FAMILY = "Arial";
     public static final int ROUND_SCALE = 5;
@@ -162,6 +165,11 @@ public class PreEqualizationController {
                 preEqSignature.getMicroReflection()));
     }
 
+    /**
+     * Helper method for severity coloring.
+     * @param severity int code value of the severity
+     * @return {@link Color} of the provided severity
+     */
     private Color calculateSeverityColor(final int severity) {
         switch (severity) {
             case 2: return Color.DARKRED;

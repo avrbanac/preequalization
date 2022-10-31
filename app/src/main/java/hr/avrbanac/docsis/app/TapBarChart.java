@@ -136,8 +136,8 @@ public class TapBarChart extends StackedBarChart<String, Double> {
     }
 
     /**
-     * There is no easy way to add lines in barchart. By overriding {@link super#layoutPlotChildren()} it is possible to add lines to list
-     * of plot children.
+     * There is no easy way to add lines in barchart. By overriding {@link StackedBarChart#layoutPlotChildren()} (in super) it is possible
+     * to add lines to list of plot children.
      */
     @Override
     protected void layoutPlotChildren() {

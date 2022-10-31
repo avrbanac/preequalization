@@ -6,6 +6,9 @@ import org.apache.commons.math3.complex.Complex;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Helper class to enable multiple datum testing for each test method.
+ */
 public class TestBook {
 
     private static final List<TestPreEqStructure> preEqTests = new ArrayList<>();
@@ -49,18 +52,30 @@ public class TestBook {
                 new Complex(9, 35),
                 new Complex(10, 40),
                 new Complex(11, 29),
-                new Complex(9.8125, 40.28125)
+                9.8125d
         ));
     }
 
+    /**
+     * Returns statically defined data for pre-eq structure test.
+     * @return {@link List} of {@link TestPreEqStructure} data
+     */
     public static List<TestPreEqStructure> getPreEqTests() {
         return preEqTests;
     }
 
+    /**
+     * Returns statically defined data for pre-eq coefficient structure test.
+     * @return {@link List} of {@link TestCoefficientStructure} data
+     */
     public static List<TestCoefficientStructure> getCoefficientStructures() {
         return coefficientStructures;
     }
 
+    /**
+     * Returns statically defined data for pre-eq parabolic interpolation algorithm test.
+     * @return {@link List} of {@link TestParabolicInterpolation} data
+     */
     public static List<TestParabolicInterpolation> getParabolicInterpolations() {
         return parabolicInterpolations;
     }
