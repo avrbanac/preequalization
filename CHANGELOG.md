@@ -6,7 +6,17 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 
 ## Unreleased / TODO
 
-- correlation algorithm
+- signature missing delay (echo delay)
+- correlation algorithm (convolution of IFFT with in channel frequency response)
+
+## v0.3.6 @avrbanac
+
+### Fixed
+- more precise ChannelWidth javadoc
+- renamed MinMaxValue Signature's inner class to SignatureArray and added new methods (createTranspondedArray)
+
+### Removed
+- unnecessary import from App controller
 
 ## v0.3.5 @avrbanac
 

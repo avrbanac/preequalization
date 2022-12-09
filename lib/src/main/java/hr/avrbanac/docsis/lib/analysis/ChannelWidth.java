@@ -68,7 +68,7 @@ public enum ChannelWidth {
 
     /**
      * Returns channel symbol rate.
-     * @return float channel symbol rate
+     * @return float channel symbol rate [MHz]
      */
     public float getSymRate() {
         return symRate;
@@ -76,7 +76,7 @@ public enum ChannelWidth {
 
     /**
      * Returns channel symbol period duration in microseconds.
-     * @return float symbol period duration
+     * @return float symbol period duration [usec]
      */
     public float getSymPeriod() {
         return symPeriod;
@@ -84,7 +84,7 @@ public enum ChannelWidth {
 
     /**
      * Returns channel max delay (16 T for post-main tap).
-     * @return float channel max delay
+     * @return float channel max delay [16T usec]
      */
     public float getMaxDelay() {
         return maxDelay;

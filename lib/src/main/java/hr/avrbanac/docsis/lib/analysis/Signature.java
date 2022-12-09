@@ -10,18 +10,20 @@ package hr.avrbanac.docsis.lib.analysis;
  * @see PreEqAnalysis#getInChannelFrequencyResponseMagnitude()
  */
 public class Signature {
-
     /**
-     * Helper class wrapper for multiple values. The same class is used to encapsulate algorithm for detecting min / max values.
+     * Helper class for encapsulating min / max values from given array together with corresponding array indices. Min, max and peak-to-peak
+     * values are calculated within this class. Also, this class keeps reference to the originally given array.
      */
-    private static class MinMaxValues {
+    private static class SignatureArray {
         private double min;
         private int minPtr;
         private double max;
         private int maxPtr;
         private final double peakToPeak;
+        private final double[] origIcfrMag;
 
-        private MinMaxValues(final double[] icfrMag) {
+        SignatureArray(final double[] icfrMag) {
+            origIcfrMag = icfrMag;
             min = icfrMag[0];
             max = icfrMag[0];
             minPtr = 0;
@@ -41,24 +43,77 @@ public class Signature {
             peakToPeak = Math.abs(max - min);
         }
 
+        /**
+         * Returns minimal value from the original ICFR mag. array - i.e. valley.
+         * @return ICFR mag. valley
+         */
         public double getMin() {
             return min;
         }
 
+        /**
+         * Returns minimal value's array position from the original ICFR mag. array - i.e. valley's array position.
+         * @return ICFR mag. valley's array position
+         */
         public int getMinPtr() {
             return minPtr;
         }
 
+        /**
+         * Returns max value from the original ICFR mag. array - i.e. peak.
+         * @return ICFR mag. peak
+         */
         public double getMax() {
             return max;
         }
 
+        /**
+         * Returns max value's array position from the original ICFR mag. array - i.e. peak's array position.
+         * @return ICFR mag. peak's array position
+         */
         public int getMaxPtr() {
             return maxPtr;
         }
 
+        /**
+         * Returns calculated (vertical) distance from peak to valley.
+         * @return peak-to-valley distance
+         */
         public double getPeakToPeak() {
             return peakToPeak;
+        }
+
+        /**
+         * Returns the newly created array transponded in such a way that the max value of the original array is in the first array position
+         * of the transponded array; followed by all the remaining original array elements, up until the end of the original array; followed
+         * by the skipped elements from the first position of the original array, up until the max value of the original array; with one
+         * additional element: another copy of the max value.
+         * <p>
+         *     <strong>Example:</strong>
+         *     <ul>
+         *          <li>Original array: [4,5,6,7,1,2,3]</li>
+         *          <li>Transponded array: [7,1,2,3,4,5,6,7]</li>
+         *     </ul>
+         * </p>
+         * @return double[] newly created and transponded
+         */
+        public double[] createTranspondedArray() {
+
+            double[] transponded = new double[origIcfrMag.length + 1];
+
+            // copy last m elements, starting from the max value element
+            System.arraycopy(origIcfrMag, maxPtr, transponded, 0, origIcfrMag.length - maxPtr);
+
+            // guard-optimize in case that in the original array max value was in the first position of the array
+            if (maxPtr > 0) {
+                // copy first n elements, starting from the first position of the original array
+                System.arraycopy(origIcfrMag, 0, transponded, origIcfrMag.length - maxPtr, maxPtr);
+            }
+
+            // copy max element once more at the transponded array's last position
+            transponded[origIcfrMag.length] = max;
+
+            return transponded;
         }
     }
 
@@ -83,8 +138,8 @@ public class Signature {
     public Signature(final double[] icfrMag,
                      final MicroReflectionSeverityThreshold thresholdLevel) {
 
-        MinMaxValues minMaxValues = new MinMaxValues(icfrMag);
-        microReflection = calculateMicroReflection(minMaxValues.getPeakToPeak());
+        SignatureArray minMaxArray = new SignatureArray(icfrMag);
+        microReflection = calculateMicroReflection(minMaxArray.getPeakToPeak());
         microReflectionSeverity = calculateMicroReflectionSeverity(thresholdLevel);
     }
 
