@@ -87,6 +87,14 @@ public class Signature {
         }
 
         /**
+         * Returns originally provided ICFR mag. array.
+         * @return double array of original ICFR mag.
+         */
+        public double[] getOrigIcfrMag() {
+            return origIcfrMag;
+        }
+
+        /**
          * Returns the newly created array transponded in such a way that the max value of the original array is in the first array position
          * of the transponded array; followed by all the remaining original array elements, up until the end of the original array; followed
          * by the skipped elements from the first position of the original array, up until the max value of the original array; with one
@@ -232,34 +240,60 @@ public class Signature {
             final ChannelWidth channelWidth) {
 
         double[] transArray = signatureArray.createTranspondedArray();
-        double minPeakValley = MIN_PEAK_VALLEY_PERC * signatureArray.getPeakToPeak();
-        int length = transArray.length;
-        List<DelayElement> peaks = new ArrayList<>(length);
-        List<DelayElement> valleys = new ArrayList<>(length);
+        List<DelayElement> peaks = new ArrayList<>(transArray.length);
+        List<DelayElement> valleys = new ArrayList<>(transArray.length);
+
+        findPeaksAndValleys(transArray, peaks, valleys);
+        removeHighOrderMRs(signatureArray, peaks, valleys);
+        List<Double> delayPeaks = createDelayPeakList(peaks, transArray.length);
+
+        float symRate = channelWidth.getSymRate();
+        if (!delayPeaks.isEmpty()) {
+            // for future enhancement on heuristics (to calculate delay); now return first item from list
+            return delayPeaks.get(0) / symRate * 1000;
+        } else {
+            // since there is only one peak, delay is below 1T, indicated as T (nsec) - 1 for clarity
+            return (microReflection > MR_DELAY_BOUND)
+                    ? 1.0f * ((int)(1 / symRate * 1000) - 1)
+                    : 0f;
+        }
+    }
+
+    private void findPeaksAndValleys(
+            final double[] transpondedArray,
+            final List<DelayElement> peaks,
+            final List<DelayElement> valleys) {
 
         // define prevSign as diff sign between first two elements
-        double prevSign = Math.signum(transArray[1] - transArray[0]);
+        double prevSign = Math.signum(transpondedArray[1] - transpondedArray[0]);
         double currSign;
 
         // first peak is at index point 0 (array is transponded beforehand)
-        peaks.add(new DelayElement(0, transArray[0]));
+        peaks.add(new DelayElement(0, transpondedArray[0]));
 
         // iterate array and search for sign change (means either peak or valley is found)
-        for (int i = 1; i < length - 1; i++) {
-            currSign = Math.signum(transArray[i + 1] - transArray[i]);
+        for (int i = 1; i < transpondedArray.length - 1; i++) {
+            currSign = Math.signum(transpondedArray[i + 1] - transpondedArray[i]);
 
             if (prevSign != currSign) {
                 if (currSign < 0) {
-                    peaks.add(new DelayElement(i, transArray[i]));
+                    peaks.add(new DelayElement(i, transpondedArray[i]));
                 } else {
-                    valleys.add(new DelayElement(i, transArray[i]));
+                    valleys.add(new DelayElement(i, transpondedArray[i]));
                 }
                 prevSign = currSign;
             }
         }
+    }
+
+    private void removeHighOrderMRs(
+            final SignatureArray signatureArray,
+            final List<DelayElement> peaks,
+            final List<DelayElement> valleys) {
 
         // fake initial valley value
-        DelayElement prevValley = new DelayElement(0, transArray[0]);
+        DelayElement prevValley = new DelayElement(0, signatureArray.getOrigIcfrMag()[0]);
+        double minPeakValley = MIN_PEAK_VALLEY_PERC * signatureArray.getPeakToPeak();
         int currPtr = 1;
 
         // remove high order MRs
@@ -284,8 +318,13 @@ public class Signature {
                 currPtr++;
             }
         }
+    }
 
-        List<Double> delayPeaks = new ArrayList<>(length);
+    private List<Double> createDelayPeakList(
+            final List<DelayElement> peaks,
+            final int transArrayLength) {
+
+        List<Double> delayPeaks = new ArrayList<>(transArrayLength);
         double delayValue;
 
         // populate delay peak list by calculating horizontal distances between peaks (array index diff), but taking into account length
@@ -293,22 +332,15 @@ public class Signature {
             int firstIndex = peaks.get(i).getIndex();
             int secondIndex = peaks.get(i + 1).getIndex();
 
-            delayValue = ((secondIndex > length / 2) && (firstIndex < length / 2))
-                    ? 1.0f * length / (length - Math.abs(secondIndex - firstIndex))
-                    : 1.0f * length / Math.abs(secondIndex - firstIndex);
+            if ((firstIndex < transArrayLength / 2) && (secondIndex > transArrayLength / 2)) {
+                delayValue = 1.0f * transArrayLength / (transArrayLength - (secondIndex - firstIndex));
+            } else {
+                delayValue = 1.0f * transArrayLength / Math.abs(secondIndex - firstIndex);
+            }
             delayPeaks.add(delayValue);
         }
 
-        float symRate = channelWidth.getSymRate() * 1000;
-        if (delayPeaks.size() > 0) {
-            // for future enhancement on heuristics (to calculate delay); now return first item from list
-            return delayPeaks.get(0) / symRate;
-        } else {
-            // since there is only one peak, delay is below 1T, indicated as T (nsec) - 1 for clarity
-            return (microReflection > MR_DELAY_BOUND)
-                    ? 1.0f * ((int)(1 / symRate) - 1)
-                    : 0f;
-        }
+        return delayPeaks;
     }
 
     /**

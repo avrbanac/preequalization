@@ -7,6 +7,14 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 ## Unreleased / TODO
 - correlation algorithm (convolution of IFFT with in channel frequency response)
 
+## v0.4.0 @avrbanac
+
+### Fixed
+- delay calculation
+
+### Tested
+- signature with its delay calculation (test base of 1k pre-eq strings)
+
 ## v0.3.7 @avrbanac - adding Signature MR delay feature
 
 ### Added
