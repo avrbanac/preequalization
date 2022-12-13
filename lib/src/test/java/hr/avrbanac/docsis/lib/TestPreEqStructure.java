@@ -26,6 +26,7 @@ public class TestPreEqStructure {
     private final double[] daICFR;
     private final double microReflection;
     private final String severity;
+    private final double delay;
 
     /**
      * Private CTOR - too many parameters (unorganized!!!). Using builder pattern instead.
@@ -52,6 +53,7 @@ public class TestPreEqStructure {
         this.daICFR = builder.daICFR;
         this.microReflection = builder.microReflection;
         this.severity = builder.severity;
+        this.delay = builder.delay;
     }
 
     /**
@@ -223,6 +225,14 @@ public class TestPreEqStructure {
     }
 
     /**
+     * Returns stored ICFR (In Channel Frequency Response) MR (microj-reflection) delay value.
+     * @return double value of accumulated MR delay
+     */
+    public double getDelay() {
+        return delay;
+    }
+
+    /**
      * Helper builder class since the test structure has so many fields.
      */
     public static class Builder {
@@ -247,13 +257,14 @@ public class TestPreEqStructure {
         private double[] daICFR;
         private double microReflection;
         private String severity;
+        private double delay;
         private final boolean[] initialized = {
                 false, false, false, false,
                 false, false, false, false,
                 false, false, false, false,
                 false, false, false, false,
                 false, false, false, false,
-                false};
+                false, false};
 
         /**
          * Sets pre-eq string value for builder.
@@ -554,8 +565,8 @@ public class TestPreEqStructure {
         }
 
         /**
-         * Sets the severity string for the builder.
-         * @param severity {@link String} value of the severity
+         * Sets the MR severity string for the builder.
+         * @param severity {@link String} value of the MR severity
          * @return {@link Builder} so the setters can be chained
          */
         public Builder setSeverity(final String severity) {
@@ -565,16 +576,32 @@ public class TestPreEqStructure {
         }
 
         /**
+         * Sets the MR delay value for the builder
+         * @param delay double value of the MR delay
+         * @return {@link Builder} so the setters can be chained
+         */
+        public Builder setDelay(final double delay) {
+            this.delay = delay;
+            this.initialized[21] = true;
+            return this;
+        }
+
+        /**
          * Helper setter for the signature data for the builder.
          * @param microReflection double MR value
-         * @param severity {@link String} value of the severity
+         * @param severity {@link String} value of the MR severity
+         * @param delay double value of the MR delay
          * @return {@link Builder} so the setters can be chained
          */
         public Builder setSignature(
                 final double microReflection,
-                final String severity) {
+                final String severity,
+                final double delay) {
 
-            return this.setMicroReflection(microReflection).setSeverity(severity);
+            return this
+                    .setMicroReflection(microReflection)
+                    .setSeverity(severity)
+                    .setDelay(delay);
         }
 
         /**

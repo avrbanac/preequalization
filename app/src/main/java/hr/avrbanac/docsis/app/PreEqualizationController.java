@@ -155,13 +155,14 @@ public class PreEqualizationController {
      * @param preEqAnalysis {@link PreEqAnalysis} needed as severity data
      */
     private void addMRSeverity(final PreEqAnalysis preEqAnalysis) {
-        Signature preEqSignature = preEqAnalysis.getSignature();
+        Signature preEqSignature = preEqAnalysis.getSignature(channelWidth);
         int severity = preEqSignature.getMicroReflectionSeverity().getLevel();
         signature.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 12));
         signature.setTextFill(calculateSeverityColor(severity));
-        signature.setText(String.format("Severity: %s, calculated micro-reflection: %.2f",
+        signature.setText(String.format("Severity: %s, calculated micro-reflection: %.2f, calculated MR delay: %.2f",
                 preEqSignature.getMicroReflectionSeverity().getName(),
-                preEqSignature.getMicroReflection()));
+                preEqSignature.getMicroReflection(),
+                preEqSignature.getDelay()));
     }
 
     /**

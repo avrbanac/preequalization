@@ -105,10 +105,11 @@ class PreEqDataTest {
             for (int i = 0; i < icfr.length; i++) {
                 Assertions.assertEquals(expectedICFR[i], Precision.round(icfr[i], 4));
             }
-            Signature signature = pea.getSignature();
+            Signature signature = pea.getSignature(ChannelWidth.CW_US_6_4);
             LOG.info("Signature: {}", signature);
             Assertions.assertEquals(testStructure.getMicroReflection(), Precision.round(signature.getMicroReflection(), 3));
             Assertions.assertEquals(testStructure.getSeverity(), signature.getMicroReflectionSeverity().getName());
+            Assertions.assertEquals(testStructure.getDelay(), signature.getDelay());
         });
     }
 

@@ -200,15 +200,27 @@ public class PreEqAnalysis {
 
     /**
      * Returns {@link Signature} calculated using current pre-eq analysis.
-     * @return {@link Signature} with wrapped calculated micro-reflection and severity
+     *
+     * @param channelWidth {@link ChannelWidth} provided so that symbol rate can be fetched
+     * @return {@link Signature} with wrapped calculated micro-reflection, severity and delay
      */
-    public Signature getSignature() {
-        return getSignature(MicroReflectionSeverityThreshold.CABLE_LABS);
+    public Signature getSignature(final ChannelWidth channelWidth) {
+        return getSignature(channelWidth, MicroReflectionSeverityThreshold.CABLE_LABS);
     }
 
-    public Signature getSignature(final MicroReflectionSeverityThreshold thresholdLevel) {
+    /**
+     * Returns {@link Signature} calculated using current pre-eq analasis.
+     *
+     * @param channelWidth {@link ChannelWidth} provided so that symbol rate can be fetched
+     * @param thresholdLevel {@link MicroReflectionSeverityThreshold} provided thresholdLevel for MR
+     * @return {@link Signature} with wrapped calculated micro-reflection, severity and delay
+     */
+    public Signature getSignature(
+            final ChannelWidth channelWidth,
+            final MicroReflectionSeverityThreshold thresholdLevel) {
+
         long start = System.nanoTime();
-        Signature signature = new Signature(getInChannelFrequencyResponseMagnitude(), thresholdLevel);
+        Signature signature = new Signature(getInChannelFrequencyResponseMagnitude(), channelWidth, thresholdLevel);
         elapsedTime += System.nanoTime() - start;
 
         return signature;

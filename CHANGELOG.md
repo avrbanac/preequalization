@@ -5,9 +5,18 @@ All notable changes to 'Pre-equalization project' will be documented in this fil
 Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principles.
 
 ## Unreleased / TODO
-
-- signature missing delay (echo delay)
 - correlation algorithm (convolution of IFFT with in channel frequency response)
+
+## v0.3.7 @avrbanac - adding Signature MR delay feature
+
+### Added
+- delay for Signature MR
+
+### Fixed
+- small changes to Signature class structure
+- update to other classes that use Signature
+- updated test classes
+- updated javadoc for changed classes
 
 ## v0.3.6 @avrbanac
 

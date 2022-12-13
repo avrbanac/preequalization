@@ -29,7 +29,7 @@ public class TestBook {
                         0.2880d, -0.0535d, -0.1058d, -0.2230d, -0.3263d, -0.5362d, -0.5669d, -0.6914d,
                         -0.5617d, -0.5845d, -0.7247d, -0.7140d, -0.6001d, -0.6557d, -0.6870d, -0.6488d,
                         -0.2410d, -0.2443d, -0.1699d, -0.0415d, 0.0545d, -0.0124d, 0.4373d, 0.2381d})
-                .setSignature(-19.339d, "highMonitoringFrequency")
+                .setSignature(-19.339d, "highMonitoringFrequency", 0d)
                 .build());
 
 
