@@ -16,6 +16,8 @@ public class PreEqException extends RuntimeException {
     public static final PreEqException STRING_NOT_BYTE_REPRESENTATION = new PreEqException(ErrorClass.STRING_NOT_BYTE_REPRESENTATION);
     public static final PreEqException FFT_TAP_COUNT_ERROR = new PreEqException(ErrorClass.FFT_TAP_COUNT_ERROR);
     public static final PreEqException TDR_CALCULATION_ERROR = new PreEqException(ErrorClass.TDR_CALCULATION_ERROR);
+    public static final PreEqException REVERSE_TAP_COUNT_NOT_SUPPORTED = new PreEqException(ErrorClass.REVERSE_TAP_COUNT_NOT_SUPPORTED);
+    public static final PreEqException MAIN_TAP_INDEX_OUT_OF_RANGE = new PreEqException(ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE);
     public static final PreEqException TEST_ERROR = new PreEqException(ErrorClass.TEST_ERROR);
 
     private final ErrorClass errorClass;
@@ -86,6 +88,20 @@ public class PreEqException extends RuntimeException {
 
         TDR_CALCULATION_ERROR(3002,
                 "Error occurred while trying to calculate TDR (couldn't find max MR tap), probably defective tap structure"),
+
+        /**
+         * Pre-eq error occurred while parsing pre-eq string header: number of reverse taps (header byte 4, RFC 4546) is not zero. Only
+         * forward (linear transversal) equalizer data is supported.
+         */
+        REVERSE_TAP_COUNT_NOT_SUPPORTED(3003,
+                "PreEqualization string header defines reverse taps, current implementation supports only forward taps"),
+
+        /**
+         * Pre-eq error occurred while parsing pre-eq string header: main tap index is outside the range where all key metrics are
+         * defined (there must be at least one tap before and one tap after the main tap).
+         */
+        MAIN_TAP_INDEX_OUT_OF_RANGE(3004,
+                "PreEqualization string header contains main tap index outside of the supported range (2 to tap count - 1)"),
 
         TEST_ERROR (Integer.MAX_VALUE,
                 "Error occurred while trying to create test structure, this is not part of the production code")

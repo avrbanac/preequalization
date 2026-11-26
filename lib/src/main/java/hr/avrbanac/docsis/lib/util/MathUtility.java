@@ -11,95 +11,70 @@ public class MathUtility {
     private MathUtility() { }
 
     /**
-     * Parabolic interpolation enumeration with 2 different implementations.
+     * Three-point parabolic interpolation of a local peak, as defined in CableLabs CM-GL-PNMP-V03, section 6.6.4. The three samples must
+     * be <strong>evenly spaced by 1</strong> on the x-axis (x1 - 1, x1, x1 + 1); this is why only the middle x value is a parameter.
+     * <ul>
+     *     <li>y = a*x^2 + b*x + c</li>
+     *     <li>a = (y0 - 2*y1 + y2) / 2  (a must be negative, otherwise no peak exists)</li>
+     *     <li>xm = (y0 - y2) / (4*a)</li>
+     *     <li>x_out = x1 + xm</li>
+     * </ul>
+     * Example from the guideline: x1 = 10, y = (35, 40, 29) gives 9.8125.
+     * @param x1 double x position of the middle sample
+     * @param y0 double value of the left sample (at x1 - 1)
+     * @param y1 double value of the middle sample (at x1)
+     * @param y2 double value of the right sample (at x1 + 1)
+     * @return double interpolated x position of the peak, or {@link Double#NaN} if the samples do not form a peak (a &gt;= 0)
      */
-    public enum ParabolicInterpolation {
-        /**
-         * The algorithm was found in the official CableLabs documentation. It was unclear whether it should be used with tap energy ratio
-         * values or nominal energy ratio values. Since nominal energy ratio uses nominal energy instead the calculated real value, it seems
-         * that energy ratio is a better choice (more precise one).
-         * <ul>
-         *     <li>y = a*x^2 + b*x + c</li>
-         *     <li>a = (y0 - 2*y1 + y2) / 2  (note: a should be negative or no peak exists)</li>
-         *     <li>b = (y2 - y0) / 2</li>
-         *     <li>c = y1</li>
-         *     <li>xm = (y0 - y2) / (4*a)</li>
-         *     <li>ym = -(y0 - y2)^2 / (16*a)</li>
-         *     <li>Xout = x1 + xm</li>
-         *     <li>Yout = y1 + ym</li>
-         * </ul>
-         */
-        V1 {
-            /**
-             * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
-             * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
-             * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
-             * @return double value of the X point (interpolated) - real part of the complex number
-             */
-            @Override
-            public double doCalculate(Complex left, Complex middle, Complex right) {
-                double diff = left.getImaginary() - right.getImaginary(); //v2
-                double a = (left.getImaginary() - 2 * middle.getImaginary() + right.getImaginary()) / 2;
-                double xm = diff / (4 * a);
-                // this is needed only for y value: double ym = (-1d * (diff * diff)) / (16 * a)
+    public static double parabolicPeak(
+            final double x1,
+            final double y0,
+            final double y1,
+            final double y2) {
 
-                return middle.getReal() + xm;
-            }
-        },
-        /**
-         * The algorithm was extrapolated from existing third party pre-eq software partially written by CableLabs. It seems that in the
-         * original code, energy ratio (calculated with TTE) was used instead of nominal values.
-         */
-        V2 {
-            /**
-             * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
-             * @param middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
-             * @param right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
-             * @return double value of the X point (interpolated) - real part of the complex number
-             */
-            @Override
-            public double doCalculate(Complex left, Complex middle, Complex right) {
-                double x1 = left.getReal();
-                double y1 = left.getImaginary();
-                double x2 = middle.getReal();
-                double y2 = middle.getImaginary();
-                double x3 = right.getReal();
-                double y3 = right.getImaginary();
-
-                double u1 = x1 * x1 - x2 * x2;
-                double u2 = x1 * x1 - x3 * x3;
-
-                double v1 = x1 - x2;
-                double v2 = x1 - x3;
-
-                double w1 = y1 - y2;
-                double w2 = y1 - y3;
-
-                double k1 = u1 / v1 - u2 / v2;
-                double m1 = w1 / v1 - w2 / v2;
-
-                return -0.5d * (w2 * k1 / v2 / m1 - u2 / v2);
-            }
-        };
-
-        abstract double doCalculate(final Complex left, final Complex middle, final Complex right);
-
-        /**
-         * Calculates Parabolic interpolation with one of the implementations.
-         * @param left {@link Complex} complex number so (x0, y0) pair can be easily wrapped together
-         * @param middle middle {@link Complex} complex number so (x1, y1) pair can be easily wrapped together
-         * @param right right {@link Complex} complex number so (x2, y2) pair can be easily wrapped together
-         * @return double value of the X point (interpolated) - real part of the complex number
-         * @see ParabolicInterpolation#V1
-         * @see ParabolicInterpolation#V2
-         */
-        public double calculate(
-                final Complex left,
-                final Complex middle,
-                final Complex right) {
-
-            return this.doCalculate(left, middle, right);
+        double a = (y0 - 2 * y1 + y2) / 2;
+        if (a >= 0) {
+            return Double.NaN;
         }
+
+        return x1 + (y0 - y2) / (4 * a);
+    }
+
+    /**
+     * Band-limited (Whittaker-Shannon, sinc) interpolation of uniformly spaced complex samples. T-spaced equalizer taps are samples of a
+     * response band-limited to the symbol rate, so this reconstructs the response between the taps.
+     * @param samples {@link Complex} array of samples
+     * @param zeroIndex int array index of the sample located at t = 0
+     * @param t double position (in sample periods, relative to the zero index) at which the value is calculated
+     * @return {@link Complex} interpolated value at position t
+     */
+    public static Complex bandLimitedValue(
+            final Complex[] samples,
+            final int zeroIndex,
+            final double t) {
+
+        double re = 0d;
+        double im = 0d;
+        for (int k = 0; k < samples.length; k++) {
+            double s = sinc(t - (k - zeroIndex));
+            re += samples[k].getReal() * s;
+            im += samples[k].getImaginary() * s;
+        }
+
+        return new Complex(re, im);
+    }
+
+    /**
+     * Normalized sinc function: sin(pi*x) / (pi*x), with sinc(0) = 1.
+     * @param x double argument
+     * @return double sinc value
+     */
+    public static double sinc(final double x) {
+        if (Math.abs(x) < 1e-12) {
+            return 1d;
+        }
+
+        return Math.sin(Math.PI * x) / (Math.PI * x);
     }
 
     /**
@@ -139,10 +114,10 @@ public class MathUtility {
     }
 
     /**
-     * Returns the calculated factor needed for TDR calculations. This factor includes speed of wave propagation for the given channel
-     * symbol rate.
-     * @param symbolRate float channel symbol rate
-     * @return double factor value
+     * Returns the distance in meters that corresponds to an echo delay of one symbol period. The echo delay is a round trip between two
+     * reflection points, so the distance between them is half of the traveled path (CableLabs CM-GL-PNMP-V03, section 6.6.2).
+     * @param symbolRate float channel symbol rate in MHz
+     * @return double meters per symbol period of echo delay
      */
     public static double getTDRSpeedFactor(final float symbolRate) {
         return ChannelWidth.SPEED_OF_LIGHT * ChannelWidth.VELOCITY_OF_PROPAGATION / symbolRate / 1000000 / 2;

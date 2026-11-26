@@ -7,6 +7,72 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 ## Unreleased / TODO
 - correlation algorithm (convolution of IFFT with in channel frequency response)
 
+## v0.5.0 @avrbanac - TDR / echo delay rework
+
+Behaviour change: TDR distances and signature delays differ from v0.4.x. The new method was validated against ground-truth
+synthetic echoes (`EchoChannelGenerator`); the old one was not and was wrong for echoes next to the main tap.
+
+### Added
+- `TdrMethod`: `BAND_LIMITED` (default) - sinc (Whittaker-Shannon) interpolation of the complex post-main taps with the main tap
+  removed, fine-grid search, parabolic refinement on evenly spaced grid points; `CABLELABS_PARABOLIC` - CM-GL-PNMP-V03 6.6.4
+  (three taps in dB, local peak required), kept for comparability
+- `EchoEstimate`: echo delay in T, `isResolved()`, conversion to ns and to distance for a `ChannelWidth`
+- `PreEqAnalysis.getEchoEstimate(...)`, `Signature.isDelayResolved()`
+- `MathUtility.parabolicPeak`, `bandLimitedValue`, `sinc`
+- ground-truth tests for echo delay (0.9-15 T, error within 0.15 T below 1.5 T and 0.08 T above; CableLabs method within 0.25 T)
+  and for sub-symbol echoes (0.3-0.5 T must be reported as not resolved)
+- second real-world `TestBook` string (test app default: MTNA 511 CM, echo ~2.6 T, TDR 66.67 m); regression values, key metrics
+  hand-checked
+
+### Fixed
+- TDR for echoes next to the main tap was ~2x too short (V2 interpolation over a 2-tap gap): e.g. a 1 T echo gave ~13 m instead of
+  25.5 m. Real test string: 12.2 m -> 25.82 m
+- signature delay was quantized to 32-point FFT bins (e.g. 430 ns for a 293 ns echo) and reported 0 for weaker echoes at 1 T; it now
+  comes from the same echo estimate as TDR (real test string: 0 -> 198.0 ns)
+- echoes too close to the main tap are now reported as not resolved (nominal 1 T, shown as "<=" in the app) instead of a falsely
+  precise value
+- app window invisible on Linux (KDE Wayland / XWayland): OpenJFX 11.0.2 set the non-resizable window's min = max size hints to
+  1x28 px (thin vertical line); upgraded OpenJFX to 17.0.21 (latest line still supporting Java 11), hints are now 1024x768
+
+### Removed
+- `MathUtility.ParabolicInterpolation` (V1 / V2); V1 survives as `MathUtility.parabolicPeak` with evenly spaced points only
+- `Signature(double[], ChannelWidth[, threshold])` constructors; `Signature` now takes an `EchoEstimate`
+- ICFR peak/valley delay heuristics in `Signature`
+
+## v0.4.1 @avrbanac
+
+### Fixed
+- 3-nibble / 4-nibble encoding detection: leading nibble mask was applied to a sign-extended byte (`0xF000`), so only upper bytes
+  >= 0x80 were detected; values like `0x7FFF` (MTNA 32767 modems) were decoded as 3-nibble (main tap became -1)
+- TDR test expected value changed from 21.96 to 12.2; the old value came from the pre-v0.3.4 TDR algorithm and the test had
+  been failing since v0.3.4. 12.2 is a regression value only (current output), NOT a verified result; the TDR method itself
+  is under review against CableLabs CM-GL-PNMP-V03
+
+### Changed
+- correctness reference is now CableLabs documentation and physics (see `docs/references`); existing test values are treated as
+  unverified legacy values
+
+- non-hex characters were silently parsed (`Character.digit` returns -1, it does not throw), so `STRING_NOT_BYTE_REPRESENTATION`
+  was never raised; now validated explicitly (also odd length)
+- header byte 4 is the number of reverse taps (RFC 4546), not a reserved byte; non-zero value was silently accepted, now rejected
+  with new `REVERSE_TAP_COUNT_NOT_SUPPORTED` (3003)
+- main tap index was not range-checked; values outside 2..23 failed with internal index-out-of-bounds messages, now rejected with
+  new `MAIN_TAP_INDEX_OUT_OF_RANGE` (3004)
+
+### Added
+- pre-eq decoding test (`TestPreEqDecoding` in `TestBook`) with synthetic 3-nibble, 4-nibble and MTNA 32767 strings
+- invalid pre-eq string test (`TestPreEqError` in `TestBook`) covering every header field, length and non-hex input
+- `EchoChannelGenerator` (test scope): builds pre-eq strings with known ground truth from a single-echo channel model (raised
+  cosine roll-off 0.25, 24 T-spaced taps, CM-SP-PHYv3.0 6.2.16-17); cross-checked against an independent Python model
+- ground-truth micro-reflection test (`TestEcho` in `TestBook`): 63 synthetic echoes (1.5-5.7 T, -15/-21.5/-30 dB, 3 phases);
+  MR level within 0.5 dB and CableLabs severity
+
+### Tested
+- with ground-truth strings: MR level is accurate (within ~0.1 dB) for 1.5-5.7 T; reads ~1.3 dB low at 8 T; TDR is wrong for
+  echoes near the main tap (~0.5 T reported for 0.6-1.25 T); Signature delay is coarse (e.g. 430 ns reported for a 293 ns echo).
+  TDR / delay to be reworked in v0.5.0
+- reference documentation index (`docs/references`)
+
 ## v0.4.0 @avrbanac
 
 ### Fixed

@@ -132,9 +132,13 @@ import java.util.List;
  */
 public class DefaultPreEqData implements PreEqData {
     public static final int INPUT_STRING_LENGTH = 200;
-    private static final int NIBBLE_CHECK_MASK = 0b1111_0000_0000_0000;
+    /**
+     * Mask applied to the upper byte of each real / imaginary value: selects its leading (fourth) nibble.
+     */
+    private static final int NIBBLE_CHECK_MASK = 0b1111_0000;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
+    private static final int REVERSE_TAP_COUNT = 0;
     private static final double BORDER_DIFF_PERC = 0.0005d;
 
     /**
@@ -197,6 +201,16 @@ public class DefaultPreEqData implements PreEqData {
 
         if (bytes[2] != TAP_COUNT) {
             throw PreEqException.WRONG_TAP_COUNT;
+        }
+
+        // RFC 4546 DocsEqualizerData: 4th header byte is the number of reverse taps (m), total taps = n + m
+        if (bytes[3] != REVERSE_TAP_COUNT) {
+            throw PreEqException.REVERSE_TAP_COUNT_NOT_SUPPORTED;
+        }
+
+        // pre-main and post-main metrics (PPESR, PPTSR, PostMTE...) need at least one tap on each side of the main tap
+        if (mainTapIndex < 2 || mainTapIndex > TAP_COUNT - 1) {
+            throw PreEqException.MAIN_TAP_INDEX_OUT_OF_RANGE;
         }
 
         boolean use3NibbleEncoding = is3NibbleEncoding(bytes);
@@ -410,7 +424,14 @@ public class DefaultPreEqData implements PreEqData {
 
     /**
      * Checks whole provided byte array for leading (fourth) nibble of each real / imaginary part of the complex coefficient. Only if all
-     * checked nibbles are zero can 3-nibble decoding be used.
+     * checked nibbles are zero can 3-nibble decoding be used. The leading nibble is the upper nibble of the first (upper) byte of each
+     * 2-byte value, so the mask is applied to that single byte (CableLabs CM-GL-PNMP-V03, section 6.2.2).
+     * <p>
+     * Known limitation (inherent to the format, not resolvable from the string alone): a 4-nibble string in which every value is
+     * non-negative and below 0x1000 looks exactly like a 3-nibble string. It is decoded wrongly only if a value lies in 0x0800-0x0FFF
+     * (positive amplitude 2048-4095). No documented CM amplitude (511, 1023, 2047, 32767) falls there, and a real pre-eq string without
+     * any negative coefficient is physically implausible.
+     * </p>
      * @param bytes provided array
      * @return true if all leading nibbles are zero for all coefficients and their real / imaginary parts
      * @see DefaultCoefficient

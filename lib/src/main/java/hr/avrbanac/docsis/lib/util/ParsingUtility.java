@@ -15,19 +15,27 @@ public class ParsingUtility {
      * Returns byte array from string containing that byte array. Input string must be a valid byte array representation without delimiters.
      * @param inputString {@link String} a valid string representation of the byte array
      * @return byte[] converted from value contained in the input string
+     * @throws PreEqException {@link PreEqException#STRING_NOT_BYTE_REPRESENTATION} if the string has an odd length or contains a non-hex
+     * character
      */
     public static byte[] hexStringToByteArray(final String inputString) {
-        try {
-            int length = inputString.length();
-            byte[] data = new byte[length / 2];
-            for (int i = 0; i < length; i += 2) {
-                data[i / 2] = (byte) ((Character.digit(inputString.charAt(i), 16) << 4)
-                        + Character.digit(inputString.charAt(i + 1), 16));
-            }
-            return data;
-        } catch (Exception e) {
+        int length = inputString.length();
+        if (length % 2 != 0) {
             throw PreEqException.STRING_NOT_BYTE_REPRESENTATION;
         }
+
+        byte[] data = new byte[length / 2];
+        for (int i = 0; i < length; i += 2) {
+            // Character.digit returns -1 (does not throw) for a non-hex character, so it has to be checked explicitly
+            int high = Character.digit(inputString.charAt(i), 16);
+            int low = Character.digit(inputString.charAt(i + 1), 16);
+            if (high < 0 || low < 0) {
+                throw PreEqException.STRING_NOT_BYTE_REPRESENTATION;
+            }
+            data[i / 2] = (byte) ((high << 4) + low);
+        }
+
+        return data;
     }
 
     /**

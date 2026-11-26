@@ -7,7 +7,7 @@
     <parent>
         <groupId>hr.avrbanac.docsis</groupId>
         <artifactId>preequalization</artifactId>
-        <version>0.4.0</version>
+        <version>0.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -17,17 +17,17 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>11.0.2</version>
+            <version>17.0.21</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>11.0.2</version>
+            <version>17.0.21</version>
         </dependency>
         <dependency>
             <groupId>hr.avrbanac.docsis</groupId>
             <artifactId>lib</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
         </dependency>
     </dependencies>
 

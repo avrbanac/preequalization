@@ -1,8 +1,11 @@
 package hr.avrbanac.docsis.lib;
 
 import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
+import hr.avrbanac.docsis.lib.analysis.EchoEstimate;
 import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
 import hr.avrbanac.docsis.lib.analysis.Signature;
+import hr.avrbanac.docsis.lib.analysis.TdrMethod;
+import hr.avrbanac.docsis.lib.struct.Coefficient;
 import hr.avrbanac.docsis.lib.struct.PreEqData;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.util.MathUtility;
@@ -12,6 +15,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main test class for pre-eq lib. This classes method will use {@link TestBook} with wrapped data to iterate it and run tests with all
@@ -28,6 +34,47 @@ class PreEqDataTest {
         TestBook.getCoefficientStructures().forEach(testCoefficientStructure -> {
             Assertions.assertEquals(testCoefficientStructure.getExpectedReal(), testCoefficientStructure.getCoefficient().getReal());
             Assertions.assertEquals(testCoefficientStructure.getExpectedImag(), testCoefficientStructure.getCoefficient().getImag());
+        });
+    }
+
+    /**
+     * Method for testing the per-string choice of 3-nibble or 4-nibble coefficient decoding.
+     */
+    @Test
+    void testPreEqDecoding() {
+        TestBook.getPreEqDecodings().forEach(testDecoding -> {
+            PreEqData ped = new DefaultPreEqData(testDecoding.getPreEqString());
+            Coefficient tap = ped.getCoefficients().get(testDecoding.getTapIndex() - 1);
+            Assertions.assertEquals(testDecoding.getExpectedReal(), tap.getReal());
+            Assertions.assertEquals(testDecoding.getExpectedImag(), tap.getImag());
+        });
+    }
+
+    /**
+     * Ground-truth test: micro-reflection level and severity calculated from a synthetic single-echo pre-eq string must match the echo
+     * level the string was generated from (within 0.5 dB).
+     */
+    @Test
+    void testEchoMicroReflection() {
+        TestBook.getEchoes().forEach(testEcho -> {
+            PreEqData ped = new DefaultPreEqData(testEcho.toPreEqString());
+            Signature signature = new PreEqAnalysis(ped).getSignature(ChannelWidth.CW_US_6_4);
+            Assertions.assertEquals(testEcho.getLevelDb(), signature.getMicroReflection(), 0.5d, testEcho.toString());
+            Assertions.assertEquals(testEcho.getExpectedSeverity(), signature.getMicroReflectionSeverity().getName(), testEcho.toString());
+        });
+    }
+
+    /**
+     * Method for testing that invalid pre-eq strings are rejected with the expected error class.
+     */
+    @Test
+    void testPreEqErrors() {
+        TestBook.getPreEqErrors().forEach(testError -> {
+            PreEqException e = Assertions.assertThrows(
+                    PreEqException.class,
+                    () -> new DefaultPreEqData(testError.getPreEqString()),
+                    testError.getDescription());
+            Assertions.assertEquals(testError.getExpectedErrorClass(), e.getErrorClass(), testError.getDescription());
         });
     }
 
@@ -109,26 +156,79 @@ class PreEqDataTest {
             LOG.info("Signature: {}", signature);
             Assertions.assertEquals(testStructure.getMicroReflection(), Precision.round(signature.getMicroReflection(), 3));
             Assertions.assertEquals(testStructure.getSeverity(), signature.getMicroReflectionSeverity().getName());
-            Assertions.assertEquals(testStructure.getDelay(), signature.getDelay());
+            Assertions.assertEquals(testStructure.getDelay(), Precision.round(signature.getDelay(), 1));
         });
     }
 
     /**
-     * Method for testing pre-eq parabolic interpolation algorithm. This test uses {@link MathUtility.ParabolicInterpolation#V1} only.
+     * Method for testing the CableLabs three-point parabolic interpolation ({@link MathUtility#parabolicPeak}). Points in the test book
+     * are evenly spaced; only the middle x value is used.
      */
     @Test
     void testMathParabolicInterpolation() {
         TestBook.getParabolicInterpolations().forEach(testParabolicInterpolation -> {
-            double calculated = MathUtility.ParabolicInterpolation.V1.calculate(
-                    testParabolicInterpolation.getLeftPoint(),
-                    testParabolicInterpolation.getMiddlePoint(),
-                    testParabolicInterpolation.getRightPoint());
+            double calculated = MathUtility.parabolicPeak(
+                    testParabolicInterpolation.getMiddlePoint().getReal(),
+                    testParabolicInterpolation.getLeftPoint().getImaginary(),
+                    testParabolicInterpolation.getMiddlePoint().getImaginary(),
+                    testParabolicInterpolation.getRightPoint().getImaginary());
             Assertions.assertEquals(testParabolicInterpolation.getExpectedInterpolation(), calculated);
         });
     }
 
     /**
-     * Method for testing TDR calculation. Test uses {@link MathUtility.ParabolicInterpolation#V2} only.
+     * Ground-truth test: echo delay estimated from a synthetic single-echo pre-eq string must match the delay the string was generated
+     * from. Band-limited (default) method: within 0.15 T below 1.5 T and within 0.08 T from 1.5 T on; TDR distance and signature delay
+     * must be consistent with it. CableLabs method: within 0.25 T when resolved, never resolved for echoes up to 1.25 T.
+     */
+    @Test
+    void testEchoDelay() {
+        List<TestEcho> allEchoes = new ArrayList<>(TestBook.getEchoes());
+        allEchoes.addAll(TestBook.getLongEchoes());
+        allEchoes.forEach(testEcho -> {
+            PreEqAnalysis pea = new PreEqAnalysis(new DefaultPreEqData(testEcho.toPreEqString()));
+            double expected = testEcho.getDelay();
+            double tolerance = expected < 1.5d ? 0.15d : 0.08d;
+
+            EchoEstimate echo = pea.getEchoEstimate(0, false);
+            Assertions.assertTrue(echo.isResolved(), testEcho.toString());
+            Assertions.assertEquals(expected, echo.getDelay(), tolerance, testEcho.toString());
+
+            double metersPerT = MathUtility.getTDRSpeedFactor(ChannelWidth.CW_US_6_4.getSymRate());
+            Assertions.assertEquals(expected * metersPerT, pea.getTDR(ChannelWidth.CW_US_6_4, 0, false), tolerance * metersPerT,
+                    testEcho.toString());
+
+            double nsPerT = 1000d / ChannelWidth.CW_US_6_4.getSymRate();
+            Signature signature = pea.getSignature(ChannelWidth.CW_US_6_4);
+            Assertions.assertTrue(signature.isDelayResolved(), testEcho.toString());
+            Assertions.assertEquals(expected * nsPerT, signature.getDelay(), tolerance * nsPerT, testEcho.toString());
+
+            EchoEstimate cableLabs = pea.getEchoEstimate(0, false, TdrMethod.CABLELABS_PARABOLIC);
+            if (expected <= 1.25d) {
+                Assertions.assertFalse(cableLabs.isResolved(), testEcho.toString());
+            } else if (cableLabs.isResolved()) {
+                Assertions.assertEquals(expected, cableLabs.getDelay(), 0.25d, testEcho.toString());
+            }
+        });
+    }
+
+    /**
+     * Ground-truth test: echoes too close to the main tap cannot be located from T-spaced taps and must be reported as not resolved,
+     * with the nominal one-symbol delay.
+     */
+    @Test
+    void testSubSymbolEcho() {
+        TestBook.getSubSymbolEchoes().forEach(testEcho -> {
+            PreEqAnalysis pea = new PreEqAnalysis(new DefaultPreEqData(testEcho.toPreEqString()));
+            EchoEstimate echo = pea.getEchoEstimate(0, false);
+            Assertions.assertFalse(echo.isResolved(), testEcho.toString());
+            Assertions.assertEquals(EchoEstimate.UNRESOLVED_DELAY, echo.getDelay(), testEcho.toString());
+            Assertions.assertFalse(pea.getSignature(ChannelWidth.CW_US_6_4).isDelayResolved(), testEcho.toString());
+        });
+    }
+
+    /**
+     * Method for testing TDR calculation (default band-limited method) on real pre-eq strings.
      */
     @Test
     void testTDR() {
