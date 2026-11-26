@@ -52,7 +52,7 @@ lib/  hr.avrbanac.docsis.lib
     ├── MathUtility         parabolicPeak (PNMP 6.6.4, evenly spaced points only), bandLimitedValue / sinc, FFT size, TDR speed factor
     └── ParsingUtility      hex<->bytes, input validation, metrics pretty-print
 
-app/  hr.avrbanac.docsis.app   (JavaFX 11, FXML)
+app/  hr.avrbanac.docsis.app   (OpenJFX 17.0.21, FXML; 17 is the last line that runs on Java 11)
 ├── PreEqualizationApplication  entry point; loads /views/preeq-view.fxml
 ├── PreEqualizationController   single controller; onCalculateClick() drives everything
 ├── TapBarChart                 StackedBarChart subclass patching JavaFX's broken "negative" CSS class

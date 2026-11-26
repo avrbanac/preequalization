@@ -29,6 +29,8 @@ synthetic echoes (`EchoChannelGenerator`); the old one was not and was wrong for
   comes from the same echo estimate as TDR (real test string: 0 -> 198.0 ns)
 - echoes too close to the main tap are now reported as not resolved (nominal 1 T, shown as "<=" in the app) instead of a falsely
   precise value
+- app window invisible on Linux (KDE Wayland / XWayland): OpenJFX 11.0.2 set the non-resizable window's min = max size hints to
+  1x28 px (thin vertical line); upgraded OpenJFX to 17.0.21 (latest line still supporting Java 11), hints are now 1024x768
 
 ### Removed
 - `MathUtility.ParabolicInterpolation` (V1 / V2); V1 survives as `MathUtility.parabolicPeak` with evenly spaced points only
