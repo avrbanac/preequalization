@@ -42,6 +42,22 @@ public class TestBook {
                 .setSignature(-19.339d, "highMonitoringFrequency", 198.0d)
                 .build());
 
+        // Default string of the test app (preeq-view.fxml): MTNA 511 CM, strong echo between taps 10 and 11 (~2.6 T after the main
+        // tap). REGRESSION VALUES (v0.5.0 output). Hand-checked: MTE = 494^2, MTC = 10log(262111/244036) = 0.31 dB, PPTSR from
+        // taps 7 / 9 energies 740 / 689 = 0.31 dB; TDR 2.617 T * 25.47 m/T (CableLabs 6.6.4 method gives 2.72 T / 69.2 m).
+        preEqTests.add(new TestPreEqStructure.Builder()
+                .setPreEqData("08011800FFFF000000000001FFFEFFFD00030004FFFAFFFB00080009FFF0FFEA01EE0000FFEFFFEC0038FFD80055FFD7FFE20003001FFFE5FFFCFFFA0001FFFE0001FFF7FFFE0002FFFFFFFDFFFF000000000000FFFF0000000000000000000000000000", 8, 24, 1)
+                .setLongMetrics(244036L, 511L, 261121L, 986L, 17089L, 262111L)
+                .setDBMetrics(0.31d, 11.304d, -11.614d, -24.246d, -11.858d, -12.388d, 0.31d)
+                .setdTDR(66.67d)
+                .setDaICFR(new double[]{
+                        -0.867d, -0.0421d, 1.2504d, 1.7045d, 1.151d, 0.0781d, -1.0563d, -1.8742d,
+                        -2.3057d, -2.3728d, -2.044d, -1.4109d, -0.5198d, 0.627d, 1.8216d, 2.2687d,
+                        1.6623d, 0.4953d, -0.7458d, -1.8261d, -2.5356d, -2.8753d, -2.7852d, -2.2839d,
+                        -1.328d, -0.1983d, 1.045d, 2.0591d, 2.2617d, 1.6123d, 0.4746d, -0.544d})
+                .setSignature(-10.82d, "immediateActionRequired", 511.2d)
+                .build());
+
 
         //***********************
         // ALL COEFFICIENT TESTS:

@@ -21,6 +21,8 @@ synthetic echoes (`EchoChannelGenerator`); the old one was not and was wrong for
 - `MathUtility.parabolicPeak`, `bandLimitedValue`, `sinc`
 - ground-truth tests for echo delay (0.9-15 T, error within 0.15 T below 1.5 T and 0.08 T above; CableLabs method within 0.25 T)
   and for sub-symbol echoes (0.3-0.5 T must be reported as not resolved)
+- second real-world `TestBook` string (test app default: MTNA 511 CM, echo ~2.6 T, TDR 66.67 m); regression values, key metrics
+  hand-checked
 
 ### Fixed
 - TDR for echoes next to the main tap was ~2x too short (V2 interpolation over a 2-tap gap): e.g. a 1 T echo gave ~13 m instead of
