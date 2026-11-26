@@ -21,7 +21,22 @@ public class PreEqAnalysis {
     private static final PreEqFFTInputFormat PRE_EQ_FFT_INPUT_FORMAT = PreEqFFTInputFormat.FIRST_TAP_FIRST_POINT;
     private static final int MIN_FFT_INPUT_SIZE = 8;
     private static final int MAX_FFT_INPUT_SIZE = 128;
-    private static final MathUtility.ParabolicInterpolation PARABOLIC_INTERPOLATION = MathUtility.ParabolicInterpolation.V2;
+    // Echo delay (TDR) estimation
+    private static final TdrMethod DEFAULT_TDR_METHOD = TdrMethod.BAND_LIMITED;
+    /**
+     * Fine grid density for the band-limited search (1/64 T is ~0.4 m at 6.4 MHz).
+     */
+    private static final int GRID_STEPS_PER_T = 64;
+    /**
+     * Band-limited search starts half a symbol after the main tap (main tap itself is removed).
+     */
+    private static final double BAND_LIMITED_SEARCH_START = 0.5d;
+    /**
+     * Echoes estimated closer than this (in T) are not resolved: simulation with synthetic single-echo strings shows that below ~0.9 T
+     * the echo merges with the main tap (e.g. a 0.6 T echo is estimated at ~0.88 T).
+     */
+    private static final double SUB_T_RESOLUTION_LIMIT = 0.9d;
+    private static final long ZERO_TAP_ENERGY_FLOOR = 1L;
 
     /**
      * Parsed pre-eq data with calculated key metrics.
@@ -118,84 +133,82 @@ public class PreEqAnalysis {
     }
 
     /**
-     * Default overloaded method which initiates calculation with default parabolic interpolation defined for this class.
-     * @param channelWidth {@link ChannelWidth} carrying the information about width of the channel and symbol rate
-     * @param nearPostMainTapCount int count of the post-main energy taps considered near reflections
+     * Returns the distance in meters between the two reflection points of the dominant echo, using the default {@link TdrMethod}.
+     * @param channelWidth {@link ChannelWidth} carrying the symbol rate
+     * @param nearPostMainTapCount int count of the post-main taps considered near reflections
      * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
-     * @return double TDR value representing distance between the strongest MR point and first strong downstream reflection point
-     * @see #getTDR(ChannelWidth, int, boolean, MathUtility.ParabolicInterpolation) 
+     * @return double distance in meters; for an echo that is not resolved this is the nominal 1 T distance (see
+     * {@link #getEchoEstimate(int, boolean)})
      */
     public double getTDR(
             final ChannelWidth channelWidth,
             final int nearPostMainTapCount,
             final boolean onlyFarReflections) {
 
-        return getTDR(channelWidth, nearPostMainTapCount, onlyFarReflections, PARABOLIC_INTERPOLATION);
+        return getEchoEstimate(nearPostMainTapCount, onlyFarReflections).getDistance(channelWidth);
     }
 
     /**
-     * Time domain reflectometry calculation method.
-     * <p>
-     * When a propagating wave hits the impedance mismatch point, a micro-reflection (MR) occurs. This MR is reflected towards CM (wave
-     * origin) until it hits another reflection point where it is reflected again towards target (US direction). As a result,
-     * a superposition of the original wave and attenuated reflected one is perceived by the CMTS somewhere in the upstream. However, CMTS
-     * will register reflected wave as a delayed wave in correlation to the original one. This time dilatation can be used together with the
-     * known channel frequency and speed of the wave propagation to calculate the distance between two reflection points.
-     * </p>
-     * <p>
-     * When addressing these MRs, there is a distinction: near and far reflections - assuming that the first n energy taps after the main
-     * one are considered near to the CM device if the level of the MR is above certain threshold.
-     * </p>
-     * <p>
-     * Calculation will be carried out with the highest post-main tap using hyperbolic interpolation. For this interpolation process, 3
-     * points will be used: the highest MR tap, closest left and closest right tap value. Exception to this rule is calculating
-     * interpolation for first post-main tap since the previous one cannot be used as left point (main tap is maxed out). Instead,
-     * last pre-main tap will be used with according x-axis value (2 places offset instead of just one). Similarly, last post-main tap has
-     * no right point, so imaginary right point with the same value as that to the right of the last one will be used, effectively fixing
-     * calculation to the middle of the last tap. This will lower the precision of calculating interpolation for the last energy tap.
-     * (This is the last tap and the time dilatation is the longest, so lowering the precision is not so big of a problem.)
-     * </p>
-     *
-     * @param channelWidth {@link ChannelWidth} carrying the information about width of the channel and symbol rate
-     * @param nearPostMainTapCount int count of the post-main energy taps considered near reflections
+     * Returns the distance in meters between the two reflection points of the dominant echo, using the given {@link TdrMethod}.
+     * @param channelWidth {@link ChannelWidth} carrying the symbol rate
+     * @param nearPostMainTapCount int count of the post-main taps considered near reflections
      * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
-     * @param parabolicInterpolation {@link hr.avrbanac.docsis.lib.util.MathUtility.ParabolicInterpolation} used for max point determination
-     * @return double TDR value representing distance between the strongest MR point and first strong downstream reflection point
+     * @param method {@link TdrMethod} used for the echo delay estimation
+     * @return double distance in meters; for an echo that is not resolved this is the nominal 1 T distance
      */
     public double getTDR(
             final ChannelWidth channelWidth,
             final int nearPostMainTapCount,
             final boolean onlyFarReflections,
-            final MathUtility.ParabolicInterpolation parabolicInterpolation) {
+            final TdrMethod method) {
+
+        return getEchoEstimate(nearPostMainTapCount, onlyFarReflections, method).getDistance(channelWidth);
+    }
+
+    /**
+     * Estimates the delay of the dominant echo using the default {@link TdrMethod#BAND_LIMITED} method.
+     * @param nearPostMainTapCount int count of the post-main taps considered near reflections
+     * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
+     * @return {@link EchoEstimate} with the delay in symbol periods
+     * @see #getEchoEstimate(int, boolean, TdrMethod)
+     */
+    public EchoEstimate getEchoEstimate(
+            final int nearPostMainTapCount,
+            final boolean onlyFarReflections) {
+
+        return getEchoEstimate(nearPostMainTapCount, onlyFarReflections, DEFAULT_TDR_METHOD);
+    }
+
+    /**
+     * Estimates the delay of the dominant echo (micro-reflection) from the post-main taps.
+     * <p>
+     * A signal that hits an impedance mismatch is partly reflected back, hits a second mismatch and is reflected again in the original
+     * direction. The CMTS receives the main signal plus a delayed, attenuated copy (echo). The pre-equalizer compensates for it with
+     * energy in the post-main taps at (about) the echo delay. The delay is a round trip between the two reflection points, so the
+     * distance between them is half of the traveled path (CableLabs CM-GL-PNMP-V03, sections 5.2.1 and 6.6.2).
+     * </p>
+     * <p>
+     * The first {@code nearPostMainTapCount} post-main taps are considered near reflections; with {@code onlyFarReflections} set, echoes
+     * within that region (up to nearPostMainTapCount + 0.5 T) are ignored.
+     * </p>
+     * @param nearPostMainTapCount int count of the post-main taps considered near reflections
+     * @param onlyFarReflections boolean value - true if near reflections should be left out of the calculation
+     * @param method {@link TdrMethod} used for the estimation
+     * @return {@link EchoEstimate} with the delay in symbol periods
+     * @throws PreEqException {@link PreEqException#TDR_CALCULATION_ERROR} if there is no post-main energy in the searched region
+     */
+    public EchoEstimate getEchoEstimate(
+            final int nearPostMainTapCount,
+            final boolean onlyFarReflections,
+            final TdrMethod method) {
 
         long start = System.nanoTime();
-        int mainTapIndex = preEqData.getMainTapIndex();
-        int tapCount = preEqData.getTapCount();
-        double maxReflection = preEqData.getTapEnergyRatioBoundary();
-        List<Coefficient> coefficients = preEqData.getCoefficients();
-        long tte = preEqData.getTTE();
-        int ptr = onlyFarReflections ? mainTapIndex + nearPostMainTapCount : mainTapIndex;
-        int maxTapPtr = 0;
-
-        while (ptr < tapCount) {
-            double currTapEnergyRatio = coefficients.get(ptr).getEnergyRatio(tte);
-            if (currTapEnergyRatio > maxReflection) {
-                maxReflection = currTapEnergyRatio;
-                maxTapPtr = ptr;
-            }
-            ptr++;
-        }
-
-        if (maxTapPtr <= mainTapIndex - 1) throw PreEqException.TDR_CALCULATION_ERROR;
-
-        Complex left = getLeftInterpolationPoint(coefficients, maxTapPtr, mainTapIndex, tte);
-        Complex middle = new Complex(maxTapPtr - mainTapIndex + 1d, coefficients.get(maxTapPtr).getEnergyRatio(tte));
-        Complex right = getRightInterpolationPoint(coefficients, maxTapPtr, mainTapIndex, tapCount, tte);
-
-        double result = calculateInterpolatedTDR(left, middle, right, channelWidth.getSymRate(), parabolicInterpolation);
+        EchoEstimate estimate = TdrMethod.CABLELABS_PARABOLIC.equals(method)
+                ? estimateEchoCableLabs(nearPostMainTapCount, onlyFarReflections)
+                : estimateEchoBandLimited(nearPostMainTapCount, onlyFarReflections);
         elapsedTime += System.nanoTime() - start;
 
-        return result;
+        return estimate;
     }
 
     /**
@@ -209,7 +222,8 @@ public class PreEqAnalysis {
     }
 
     /**
-     * Returns {@link Signature} calculated using current pre-eq analasis.
+     * Returns {@link Signature} calculated using current pre-eq analysis. The micro-reflection level comes from the ICFR ripple, the delay
+     * from {@link #getEchoEstimate(int, boolean)} over all post-main taps (default method).
      *
      * @param channelWidth {@link ChannelWidth} provided so that symbol rate can be fetched
      * @param thresholdLevel {@link MicroReflectionSeverityThreshold} provided thresholdLevel for MR
@@ -219,11 +233,97 @@ public class PreEqAnalysis {
             final ChannelWidth channelWidth,
             final MicroReflectionSeverityThreshold thresholdLevel) {
 
+        double[] icfrMag = getInChannelFrequencyResponseMagnitude();
+        EchoEstimate echo = getEchoEstimate(0, false);
         long start = System.nanoTime();
-        Signature signature = new Signature(getInChannelFrequencyResponseMagnitude(), channelWidth, thresholdLevel);
+        Signature signature = new Signature(icfrMag, echo, channelWidth, thresholdLevel);
         elapsedTime += System.nanoTime() - start;
 
         return signature;
+    }
+
+    /**
+     * Band-limited echo delay estimation, see {@link TdrMethod#BAND_LIMITED}.
+     */
+    private EchoEstimate estimateEchoBandLimited(
+            final int nearPostMainTapCount,
+            final boolean onlyFarReflections) {
+
+        List<Coefficient> coefficients = preEqData.getCoefficients();
+        int mainPtr = preEqData.getMainTapIndex() - 1;
+        Complex[] taps = new Complex[coefficients.size()];
+        for (int k = 0; k < taps.length; k++) {
+            // main tap removed: only the compensation of the echo remains
+            taps[k] = k == mainPtr ? Complex.ZERO : new Complex(coefficients.get(k).getReal(), coefficients.get(k).getImag());
+        }
+
+        double from = onlyFarReflections ? nearPostMainTapCount + 0.5d : BAND_LIMITED_SEARCH_START;
+        double to = preEqData.getTapCount() - preEqData.getMainTapIndex();
+        int steps = (int) Math.round((to - from) * GRID_STEPS_PER_T);
+        if (steps < 2) throw PreEqException.TDR_CALCULATION_ERROR;
+
+        double[] mag = new double[steps + 1];
+        int maxPtr = 0;
+        for (int i = 0; i <= steps; i++) {
+            mag[i] = MathUtility.bandLimitedValue(taps, mainPtr, from + i * (to - from) / steps).abs();
+            if (mag[i] > mag[maxPtr]) maxPtr = i;
+        }
+
+        if (mag[maxPtr] == 0d) throw PreEqException.TDR_CALCULATION_ERROR;
+
+        double step = (to - from) / steps;
+        double delay = from + maxPtr * step;
+        if (maxPtr > 0 && maxPtr < steps) {
+            double refined = MathUtility.parabolicPeak(maxPtr, mag[maxPtr - 1], mag[maxPtr], mag[maxPtr + 1]);
+            if (!Double.isNaN(refined)) delay = from + refined * step;
+        }
+
+        return new EchoEstimate(delay, delay >= SUB_T_RESOLUTION_LIMIT, TdrMethod.BAND_LIMITED);
+    }
+
+    /**
+     * CableLabs three-point parabolic echo delay estimation, see {@link TdrMethod#CABLELABS_PARABOLIC}.
+     */
+    private EchoEstimate estimateEchoCableLabs(
+            final int nearPostMainTapCount,
+            final boolean onlyFarReflections) {
+
+        List<Coefficient> coefficients = preEqData.getCoefficients();
+        int mainPtr = preEqData.getMainTapIndex() - 1;
+        int lastPtr = preEqData.getTapCount() - 1;
+        int startPtr = mainPtr + 1 + (onlyFarReflections ? nearPostMainTapCount : 0);
+        if (startPtr > lastPtr) throw PreEqException.TDR_CALCULATION_ERROR;
+
+        int peakPtr = startPtr;
+        for (int k = startPtr; k <= lastPtr; k++) {
+            if (tapMagnitudeDb(coefficients, k) > tapMagnitudeDb(coefficients, peakPtr)) peakPtr = k;
+        }
+
+        if (coefficients.get(peakPtr).getEnergy() == 0L) throw PreEqException.TDR_CALCULATION_ERROR;
+
+        double tapDelay = peakPtr - mainPtr;
+        // left neighbour of the first post-main tap is the main tap: not a local peak, no interpolation possible (6.6.4)
+        if (peakPtr == mainPtr + 1) return new EchoEstimate(tapDelay, false, TdrMethod.CABLELABS_PARABOLIC);
+        // last tap has no right neighbour: tap resolution only
+        if (peakPtr == lastPtr) return new EchoEstimate(tapDelay, true, TdrMethod.CABLELABS_PARABOLIC);
+
+        double interpolated = MathUtility.parabolicPeak(
+                tapDelay,
+                tapMagnitudeDb(coefficients, peakPtr - 1),
+                tapMagnitudeDb(coefficients, peakPtr),
+                tapMagnitudeDb(coefficients, peakPtr + 1));
+
+        return new EchoEstimate(Double.isNaN(interpolated) ? tapDelay : interpolated, true, TdrMethod.CABLELABS_PARABOLIC);
+    }
+
+    /**
+     * Returns tap magnitude in dB (20 * log10 |tap|), with a floor for zero taps so that the value stays finite.
+     */
+    private static double tapMagnitudeDb(
+            final List<Coefficient> coefficients,
+            final int ptr) {
+
+        return 10 * Math.log10(Math.max(coefficients.get(ptr).getEnergy(), ZERO_TAP_ENERGY_FLOOR));
     }
 
     /**
@@ -283,79 +383,5 @@ public class PreEqAnalysis {
         }
 
         return result;
-    }
-
-    /**
-     * Helper method will return {@link Complex} wrapper where real value is a number of the tap (not an array index) and imaginary value is
-     * the energy ratio of the coefficient left of the max reflection tap. There is a special case, when the max reflection tap is the first
-     * one after the main tap. Then the calculation is done with the one left of the main tap taking into account it's fixed position.
-     * @param coefficients {@link List} of the {@link Coefficient} with all the taps
-     * @param middlePtr int an array index of the coefficient with max MR
-     * @param mainTapIndex main tap index (not an array index)
-     * @param tte long value of the total tap energy
-     * @return {@link Complex} wrapper for left interpolation point
-     */
-    private Complex getLeftInterpolationPoint(
-            final List<Coefficient> coefficients,
-            final int middlePtr,
-            final int mainTapIndex,
-            final long tte) {
-
-        return middlePtr == mainTapIndex
-                ? new Complex(middlePtr - mainTapIndex - 1d, coefficients.get(middlePtr - 2).getEnergyRatio(tte))
-                : new Complex(middlePtr - mainTapIndex * 1d, coefficients.get(middlePtr - 1).getEnergyRatio(tte));
-    }
-
-    /**
-     * Helper method will return {@link Complex} wrapper where real value is a number of the tap (not an array index) and imaginary value is
-     * the energy ratio of the coefficient right of the max reflection tap. There is a special case when the max reflection tap is the last
-     * post-main tap. Then the calculation is done using the coefficient left of the last one (it's energy ratio) and taking into account
-     * it's fixed position ("virtual" position right of the last one). This will result in targeting middle of the selected max reflection
-     * tap.
-     * @param coefficients {@link List} of the {@link Coefficient} with all the taps
-     * @param middlePtr int an array index of the coefficient with max MR
-     * @param mainTapIndex main tap index (not an array index)
-     * @param tapCount int total tap count
-     * @param tte long value of the total tap energy
-     * @return {@link Complex} wrapper for right interpolation point
-     */
-    private Complex getRightInterpolationPoint(
-            final List<Coefficient> coefficients,
-            final int middlePtr,
-            final int mainTapIndex,
-            final int tapCount,
-            final long tte) {
-
-        return (middlePtr == tapCount - 1)
-                ? new Complex(middlePtr - mainTapIndex + 2d, coefficients.get(middlePtr - 1).getEnergyRatio(tte))
-                : new Complex(middlePtr - mainTapIndex + 2d, coefficients.get(middlePtr + 1).getEnergyRatio(tte));
-    }
-
-    /**
-     * Helper method to interpolate and calculate TDR value from 3 points using parabolic interpolation. Method will also fix 3 point tilt
-     * (which will very likely generate either negative or very large positive value) and inverted concavity cases.
-     * There are 2 methods available for parabolic interpolation. Currently, using the one found in the third party pre-eq software.
-     * @param left {@link Complex} number representing left point with (real, imag) values
-     * @param middle {@link Complex} number representing middle point with (real, imag) values
-     * @param right {@link Complex} number representing right point with (real, imag) values
-     * @param symRate float symbol rate value needed for distance calculation
-     * @return double interpolated value fixed if needed (not to produce negative values)
-     * @see MathUtility.ParabolicInterpolation#calculate(Complex, Complex, Complex)
-     */
-    private double calculateInterpolatedTDR(
-            final Complex left,
-            final Complex middle,
-            final Complex right,
-            final float symRate,
-            final MathUtility.ParabolicInterpolation interpolation) {
-
-        double interpolated = interpolation.calculate(left, middle, right);
-
-        // find the tilt - this is very likely to be negative or very large positive value, or inverted concavity
-        if ((left.getImaginary() > middle.getImaginary() && middle.getImaginary() > right.getImaginary()) || (interpolated < 0)) {
-            interpolated = 1d;
-        }
-
-        return interpolated * MathUtility.getTDRSpeedFactor(symRate);
     }
 }

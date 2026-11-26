@@ -7,6 +7,34 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 ## Unreleased / TODO
 - correlation algorithm (convolution of IFFT with in channel frequency response)
 
+## v0.5.0 @avrbanac - TDR / echo delay rework
+
+Behaviour change: TDR distances and signature delays differ from v0.4.x. The new method was validated against ground-truth
+synthetic echoes (`EchoChannelGenerator`); the old one was not and was wrong for echoes next to the main tap.
+
+### Added
+- `TdrMethod`: `BAND_LIMITED` (default) - sinc (Whittaker-Shannon) interpolation of the complex post-main taps with the main tap
+  removed, fine-grid search, parabolic refinement on evenly spaced grid points; `CABLELABS_PARABOLIC` - CM-GL-PNMP-V03 6.6.4
+  (three taps in dB, local peak required), kept for comparability
+- `EchoEstimate`: echo delay in T, `isResolved()`, conversion to ns and to distance for a `ChannelWidth`
+- `PreEqAnalysis.getEchoEstimate(...)`, `Signature.isDelayResolved()`
+- `MathUtility.parabolicPeak`, `bandLimitedValue`, `sinc`
+- ground-truth tests for echo delay (0.9-15 T, error within 0.15 T below 1.5 T and 0.08 T above; CableLabs method within 0.25 T)
+  and for sub-symbol echoes (0.3-0.5 T must be reported as not resolved)
+
+### Fixed
+- TDR for echoes next to the main tap was ~2x too short (V2 interpolation over a 2-tap gap): e.g. a 1 T echo gave ~13 m instead of
+  25.5 m. Real test string: 12.2 m -> 25.82 m
+- signature delay was quantized to 32-point FFT bins (e.g. 430 ns for a 293 ns echo) and reported 0 for weaker echoes at 1 T; it now
+  comes from the same echo estimate as TDR (real test string: 0 -> 198.0 ns)
+- echoes too close to the main tap are now reported as not resolved (nominal 1 T, shown as "<=" in the app) instead of a falsely
+  precise value
+
+### Removed
+- `MathUtility.ParabolicInterpolation` (V1 / V2); V1 survives as `MathUtility.parabolicPeak` with evenly spaced points only
+- `Signature(double[], ChannelWidth[, threshold])` constructors; `Signature` now takes an `EchoEstimate`
+- ICFR peak/valley delay heuristics in `Signature`
+
 ## v0.4.1 @avrbanac
 
 ### Fixed

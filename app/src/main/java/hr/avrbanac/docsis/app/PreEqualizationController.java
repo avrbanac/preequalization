@@ -1,6 +1,7 @@
 package hr.avrbanac.docsis.app;
 
 import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
+import hr.avrbanac.docsis.lib.analysis.EchoEstimate;
 import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
 import hr.avrbanac.docsis.lib.analysis.Signature;
 import hr.avrbanac.docsis.lib.struct.Coefficient;
@@ -61,7 +62,7 @@ public class PreEqualizationController {
             PreEqAnalysis preEqAnalysis = new PreEqAnalysis(preEqData);
 
             coefficientTable.setItems(getTableCoefficients(preEqData));
-            addMetricsToVBoxes(preEqData, preEqAnalysis.getTDR(channelWidth, 2, false));
+            addMetricsToVBoxes(preEqData, preEqAnalysis.getEchoEstimate(2, false));
 
             tapsBarChart.setBarChartData(preEqData);
             icfrLineChart.setICFRData(preEqAnalysis.getInChannelFrequencyResponseMagnitude(), channelWidth.getValue());
@@ -75,10 +76,11 @@ public class PreEqualizationController {
     /**
      * Helper method to fill up both {@link VBox} with metrics text.
      * @param preEqData {@link PreEqData} provided parsed pre-eq data
+     * @param echo {@link EchoEstimate} of the dominant echo, used for the TDR value
      */
     private void addMetricsToVBoxes(
             final PreEqData preEqData,
-            final double tdr) {
+            final EchoEstimate echo) {
 
         Text title = new Text("Key metrics:");
         title.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 14));
@@ -125,7 +127,7 @@ public class PreEqualizationController {
                 new Text(Precision.round(preEqData.getPostMTTER(), ROUND_SCALE) + " dB"),
                 new Text(Precision.round(preEqData.getPPESR(), ROUND_SCALE) + " dB"),
                 new Text(Precision.round(preEqData.getPPTSR(), ROUND_SCALE) + " dB"),
-                new Text(Precision.round(tdr, 2) + " m")
+                new Text(formatTDR(echo))
         };
         for (Text text : values) {
             rightTextVBox.getChildren().add(text);
@@ -159,10 +161,23 @@ public class PreEqualizationController {
         int severity = preEqSignature.getMicroReflectionSeverity().getLevel();
         signature.setFont(Font.font(FONT_FAMILY, FontWeight.BOLD, 12));
         signature.setTextFill(calculateSeverityColor(severity));
-        signature.setText(String.format("Severity: %s, calculated micro-reflection: %.2f, calculated MR delay: %.2f",
+        signature.setText(String.format("Severity: %s, calculated micro-reflection: %.2f dBc, calculated MR delay: %s%.1f ns",
                 preEqSignature.getMicroReflectionSeverity().getName(),
                 preEqSignature.getMicroReflection(),
+                preEqSignature.isDelayResolved() ? "" : "<= ",
                 preEqSignature.getDelay()));
+    }
+
+    /**
+     * Helper method to format TDR distance. An echo that is too close to the main tap is shown as an upper bound.
+     * @param echo {@link EchoEstimate} of the dominant echo
+     * @return {@link String} formatted distance
+     */
+    private String formatTDR(final EchoEstimate echo) {
+        double distance = Precision.round(echo.getDistance(channelWidth), 2);
+        return echo.isResolved()
+                ? distance + " m"
+                : "<= " + distance + " m (echo next to main tap)";
     }
 
     /**

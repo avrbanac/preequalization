@@ -17,6 +17,8 @@ public class TestBook {
     private static final List<TestPreEqDecoding> preEqDecodings = new ArrayList<>();
     private static final List<TestPreEqError> preEqErrors = new ArrayList<>();
     private static final List<TestEcho> echoes = new ArrayList<>();
+    private static final List<TestEcho> longEchoes = new ArrayList<>();
+    private static final List<TestEcho> subSymbolEchoes = new ArrayList<>();
 
     static {
         //****************************
@@ -26,17 +28,18 @@ public class TestBook {
                 .setPreEqData("080118000004fffdfffbfffafffdfffd00070004fff800000017ffffffd6ffe807f7fff9ff8aff94fff700280011ffecfff700190006fff5fffcffff000dfffb0001000100040004fff600070007fffb00000008fffffffe00000004fffcffff00080000", 8, 24, 1)
                 .setLongMetrics(4157570L, 2047L, 4190209L, 3103L, 29455L, 4190128L)
                 .setDBMetrics(0.034d, 21.062d, -21.096d, -31.304d, -21.531d, -9.774d, -10.388d)
-                // REGRESSION VALUE ONLY - NOT VERIFIED. 12.2 is simply the current code's output (V2 interpolation over taps 7/9/10
-                // energy ratios, peak at ~0.479 T, * 25.47 m/T for 6.4 MHz). Echo is in the first post-main tap; reasoning based on
-                // CableLabs CM-GL-PNMP-V03 6.6.4 suggests ~25.5 m (1 T) instead. Replace with a ground-truth synthetic test.
-                // (The previous 21.96 came from the pre-v0.3.4 algorithm and had been failing since v0.3.4.)
-                .setdTDR(12.2d)
+                // v0.5.0 band-limited method: echo at 1.014 T * 25.47 m/T (6.4 MHz) = 25.82 m. Consistent with the CableLabs
+                // CM-GL-PNMP-V03 6.6.4 reading (tap 9 dominant, ~1 T = 25.5 m). The method itself is validated by the ground-truth
+                // echo tests; this real-string value is a regression check. History: 21.96 (pre-v0.3.4 algorithm), 12.2 (v0.3.4 -
+                // v0.4.1 V2 interpolation, ~2x too short for echoes next to the main tap).
+                .setdTDR(25.82d)
                 .setDaICFR(new double[]{
                         0.5492d, 0.9645d, 1.1571d, 1.0260d, 0.8909d, 0.5997d, 0.5409d, 0.4252d,
                         0.2880d, -0.0535d, -0.1058d, -0.2230d, -0.3263d, -0.5362d, -0.5669d, -0.6914d,
                         -0.5617d, -0.5845d, -0.7247d, -0.7140d, -0.6001d, -0.6557d, -0.6870d, -0.6488d,
                         -0.2410d, -0.2443d, -0.1699d, -0.0415d, 0.0545d, -0.0124d, 0.4373d, 0.2381d})
-                .setSignature(-19.339d, "highMonitoringFrequency", 0d)
+                // delay 198.0 ns = 1.014 T (v0.5.0 echo estimate); before v0.5.0 the coarse ICFR peak method reported 0
+                .setSignature(-19.339d, "highMonitoringFrequency", 198.0d)
                 .build());
 
 
@@ -112,16 +115,31 @@ public class TestBook {
 
         //******************************************************************************************************************
         // ALL GROUND-TRUTH ECHO TESTS (EchoChannelGenerator: single echo, main tap 8, amplitude 2047). Levels avoid the
-        // CableLabs severity thresholds (-18 / -25 dBc, CM-GL-PNMP-V03 6.7.2). Not yet covered: echoes below 1.5 T (main tap
-        // region) and long delays such as 8 T (MR level reads ~1.3 dB low) - both under review together with TDR.
+        // CableLabs severity thresholds (-18 / -25 dBc, CM-GL-PNMP-V03 6.7.2). Long delays (>= 7.5 T) are only used for the delay
+        // test: their MR level reads ~1.3 dB low (open question, see docs/references).
         //******************************************************************************************************************
-        double[] delays = {1.5d, 2d, 2.4d, 3d, 3.3d, 5d, 5.7d};
+        double[] delays = {0.9d, 1d, 1.1d, 1.25d, 1.5d, 1.75d, 2d, 2.4d, 3d, 3.3d, 4.6d, 5d, 5.7d};
         double[] phases = {0d, 2.1d, -1.2d};
         for (double delay : delays) {
             for (double phase : phases) {
                 echoes.add(new TestEcho(delay, -15d, phase, "immediateActionRequired"));
                 echoes.add(new TestEcho(delay, -21.5d, phase, "highMonitoringFrequency"));
                 echoes.add(new TestEcho(delay, -30d, phase, "noActionRequired"));
+            }
+        }
+        double[] longDelays = {7.5d, 9.2d, 12.3d, 15d};
+        for (double delay : longDelays) {
+            for (double phase : phases) {
+                longEchoes.add(new TestEcho(delay, -15d, phase, null));
+                longEchoes.add(new TestEcho(delay, -30d, phase, null));
+            }
+        }
+        // echoes too close to the main tap to be located from T-spaced taps (must be reported as not resolved)
+        double[] subSymbolDelays = {0.3d, 0.5d};
+        for (double delay : subSymbolDelays) {
+            for (double phase : phases) {
+                subSymbolEchoes.add(new TestEcho(delay, -15d, phase, null));
+                subSymbolEchoes.add(new TestEcho(delay, -30d, phase, null));
             }
         }
     }
@@ -172,5 +190,21 @@ public class TestBook {
      */
     public static List<TestEcho> getEchoes() {
         return echoes;
+    }
+
+    /**
+     * Returns statically defined ground-truth echo test data with long delays (used for the delay test only).
+     * @return {@link List} of {@link TestEcho} data
+     */
+    public static List<TestEcho> getLongEchoes() {
+        return longEchoes;
+    }
+
+    /**
+     * Returns statically defined ground-truth echoes that are too close to the main tap to be resolved.
+     * @return {@link List} of {@link TestEcho} data
+     */
+    public static List<TestEcho> getSubSymbolEchoes() {
+        return subSymbolEchoes;
     }
 }

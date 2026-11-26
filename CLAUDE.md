@@ -40,14 +40,16 @@ lib/  hr.avrbanac.docsis.lib
 │   ├── Coefficient
 │   └── DefaultCoefficient  4 bytes -> (real, imag), 3- or 4-nibble 2's complement decoding
 ├── analysis/
-│   ├── PreEqAnalysis       FFT -> ICFR (lazy + cached), TDR, Signature factory
-│   ├── Signature           micro-reflection (dB), severity, MR delay from ICFR magnitude
+│   ├── PreEqAnalysis       FFT -> ICFR (lazy + cached), echo estimate / TDR, Signature factory
+│   ├── TdrMethod           BAND_LIMITED (default, sinc interpolation of complex taps) / CABLELABS_PARABOLIC (PNMP 6.6.4)
+│   ├── EchoEstimate        echo delay in T + resolved flag; -> ns / meters for a ChannelWidth
+│   ├── Signature           micro-reflection level (ICFR ripple, PNMP App. IV), severity, delay (from EchoEstimate)
 │   ├── ChannelWidth        CW_US_3_2 / CW_US_6_4 (symbol rate, period, max delay), VoP=0.87, c
 │   ├── MicroReflectionSeverity(+Threshold)  GOOD/MARGINAL/BAD × LOW/MEDIUM(CableLabs)/HIGH
 │   ├── PreEqFFTInputFormat FIRST_TAP_FIRST_POINT (used, rotation 2) vs MAIN_TAP_MIDDLE
 │   └── CorrelationBond     placeholder for future correlation work
 └── util/
-    ├── MathUtility         ParabolicInterpolation V1 (CableLabs doc) / V2 (3rd-party tool, default), FFT size, TDR speed factor
+    ├── MathUtility         parabolicPeak (PNMP 6.6.4, evenly spaced points only), bandLimitedValue / sinc, FFT size, TDR speed factor
     └── ParsingUtility      hex<->bytes, input validation, metrics pretty-print
 
 app/  hr.avrbanac.docsis.app   (JavaFX 11, FXML)
@@ -61,20 +63,20 @@ app/  hr.avrbanac.docsis.app   (JavaFX 11, FXML)
 
 ### Data flow
 
-`raw string` → `DefaultPreEqData(String)` (normalize: lowercase, strip `:` and spaces; validate 200 hex chars; header bytes per RFC 4546 = main tap index (must be 2..23), taps per symbol (must be 1), forward tap count (must be 24), reverse tap count (must be 0); decode coefficients; compute metrics) → `PreEqAnalysis(preEqData)` → `getInChannelFrequencyResponseMagnitude()` / `getTDR(channelWidth, nearTaps, onlyFar)` / `getSignature(channelWidth[, threshold])`.
+`raw string` → `DefaultPreEqData(String)` (normalize: lowercase, strip `:` and spaces; validate 200 hex chars; header bytes per RFC 4546 = main tap index (must be 2..23), taps per symbol (must be 1), forward tap count (must be 24), reverse tap count (must be 0); decode coefficients; compute metrics) → `PreEqAnalysis(preEqData)` → `getInChannelFrequencyResponseMagnitude()` / `getEchoEstimate(nearTaps, onlyFar[, method])` / `getTDR(channelWidth, nearTaps, onlyFar[, method])` / `getSignature(channelWidth[, threshold])`.
 
 ### Key metrics (all on `PreEqMetrics`)
 Energy values are `long`: MTE, MTNA, MTNE, preMTE, postMTE, TTE. Ratio values are `double` in dB: MTC, MTR, NMTER, preMTTER, postMTTER, PPESR, PPTSR. Field naming uses a type prefix: `lXXX` for long and `dXXX` for double.
 
 ## Conventions & gotchas
 
-- **Tap index vs array index**: `getMainTapIndex()` and `Coefficient.getIndex()` are 1-based tap numbers. Use `index - 1` to access the list. Getting this wrong is the most common source of off-by-one bugs here (`PreEqAnalysis.getTDR` mixes both conventions on purpose).
+- **Tap index vs array index**: `getMainTapIndex()` and `Coefficient.getIndex()` are 1-based tap numbers. Use `index - 1` to access the list. Getting this wrong is the most common source of off-by-one bugs here.
 - **Nibble encoding** is decided once per string in `DefaultPreEqData.is3NibbleEncoding`. A string uses 3-nibble decoding only if no coefficient's leading nibble is set; otherwise it uses 4-nibble decoding (CableLabs CM-GL-PNMP-V03 §6.2). The mask `0xF0` is applied to the upper byte of each value; until v0.4.1 it was `0xF000` against a sign-extended `byte`, which misread MTNA-32767 strings.
 - **MTNA** (`calculateMTNA`) is empirical. It searches 2ⁿ−1 values from 511 upward within 0.05% of √TTE and falls back to the old ceil-log2 formula. Javadoc explains why.
-- `DefaultPreEqData` throws on division-by-zero cases (postMTE == 0). PPTSR reads taps adjacent to the main tap, so a main tap at position 1 or 24 throws. All non-`PreEqException` errors are wrapped into `PreEqException`.
+- `DefaultPreEqData` throws on division-by-zero cases (postMTE == 0). Main tap index must be 2..23 (`MAIN_TAP_INDEX_OUT_OF_RANGE`), because PPTSR and the pre/post metrics need taps on both sides. All non-`PreEqException` errors are wrapped into `PreEqException`.
 - The `PreEqException` constants are **shared singleton instances** with a fixed stack trace. Don't rely on their stack traces. Add new error types as an `ErrorClass` entry plus a static constant.
-- TDR sanitizes tilt or inverted-concavity results to `1 × speedFactor` rather than returning negative or huge values.
-- `Signature` delay: if only one peak is found, the delay is reported as `(int)(1/symRate*1000) - 1` ns when MR > −18 dB, otherwise 0.
+- **Echo delay / TDR** (v0.5.0): delays are in symbol periods T inside `EchoEstimate`; distance = delay × c × 0.87 / symRate / 2 (round trip, PNMP 6.6.2). Echoes estimated below 0.9 T are `resolved = false` with a nominal 1 T delay; show them as an upper bound. Measured accuracy of `BAND_LIMITED` (ground-truth tests): ≤ 0.12 T for 0.9–1.5 T, ≤ 0.08 T beyond. Never interpolate unevenly spaced points with `parabolicPeak` (that was the pre-0.5.0 TDR bug).
+- `Signature` delay comes from `getEchoEstimate(0, false)`; the micro-reflection level comes from the ICFR peak-to-peak ripple.
 - The code style keeps `final` on all parameters and locals where possible. Constructor parameters go one per line. Every public method and class gets full Javadoc; use `{@inheritDoc}` on impls. A javadoc-lint clean state was reached in v0.3.5, so keep it clean.
 - Line width is about 140 characters.
 - The logging API is SLF4J, backed by log4j2 (`log4j2.xml` in main, `log4j2-test.xml` with a bare `%msg%n` pattern for tests).

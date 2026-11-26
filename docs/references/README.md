@@ -79,6 +79,10 @@ These are findings from comparing the lib code with the sources above. They are 
    (which needs complex FD values).
 6. **Group delay metrics** (§6.3.12) are not implemented.
 
+6b. **[fixed in v0.5.0] TDR / echo delay.** Pre-0.5.0 TDR interpolated over a 2-tap gap next to the main tap (~2x too short);
+   replaced by band-limited interpolation, validated with ground-truth synthetic echoes. The §6.6.4 method is kept as
+   `TdrMethod.CABLELABS_PARABOLIC`.
+
 **Roadmap material**
 - Correlation / signature matching: §6.7.5-6.7.6 gives the full procedure (FD division method and time-domain subtraction
   method, thresholds, match matrix, grouping).
