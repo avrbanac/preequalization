@@ -37,3 +37,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Reference docs (third-party, see docs/references/fetch.sh) ###
+docs/references/raw/
+docs/references/text/
