@@ -30,6 +30,15 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 ### Added
 - pre-eq decoding test (`TestPreEqDecoding` in `TestBook`) with synthetic 3-nibble, 4-nibble and MTNA 32767 strings
 - invalid pre-eq string test (`TestPreEqError` in `TestBook`) covering every header field, length and non-hex input
+- `EchoChannelGenerator` (test scope): builds pre-eq strings with known ground truth from a single-echo channel model (raised
+  cosine roll-off 0.25, 24 T-spaced taps, CM-SP-PHYv3.0 6.2.16-17); cross-checked against an independent Python model
+- ground-truth micro-reflection test (`TestEcho` in `TestBook`): 63 synthetic echoes (1.5-5.7 T, -15/-21.5/-30 dB, 3 phases);
+  MR level within 0.5 dB and CableLabs severity
+
+### Tested
+- with ground-truth strings: MR level is accurate (within ~0.1 dB) for 1.5-5.7 T; reads ~1.3 dB low at 8 T; TDR is wrong for
+  echoes near the main tap (~0.5 T reported for 0.6-1.25 T); Signature delay is coarse (e.g. 430 ns reported for a 293 ns echo).
+  TDR / delay to be reworked in v0.5.0
 - reference documentation index (`docs/references`)
 
 ## v0.4.0 @avrbanac

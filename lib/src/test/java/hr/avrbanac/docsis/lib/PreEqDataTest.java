@@ -46,6 +46,20 @@ class PreEqDataTest {
     }
 
     /**
+     * Ground-truth test: micro-reflection level and severity calculated from a synthetic single-echo pre-eq string must match the echo
+     * level the string was generated from (within 0.5 dB).
+     */
+    @Test
+    void testEchoMicroReflection() {
+        TestBook.getEchoes().forEach(testEcho -> {
+            PreEqData ped = new DefaultPreEqData(testEcho.toPreEqString());
+            Signature signature = new PreEqAnalysis(ped).getSignature(ChannelWidth.CW_US_6_4);
+            Assertions.assertEquals(testEcho.getLevelDb(), signature.getMicroReflection(), 0.5d, testEcho.toString());
+            Assertions.assertEquals(testEcho.getExpectedSeverity(), signature.getMicroReflectionSeverity().getName(), testEcho.toString());
+        });
+    }
+
+    /**
      * Method for testing that invalid pre-eq strings are rejected with the expected error class.
      */
     @Test

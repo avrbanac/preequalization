@@ -16,6 +16,7 @@ public class TestBook {
     private static final List<TestParabolicInterpolation> parabolicInterpolations = new ArrayList<>();
     private static final List<TestPreEqDecoding> preEqDecodings = new ArrayList<>();
     private static final List<TestPreEqError> preEqErrors = new ArrayList<>();
+    private static final List<TestEcho> echoes = new ArrayList<>();
 
     static {
         //****************************
@@ -108,6 +109,21 @@ public class TestBook {
                 PreEqException.ErrorClass.STRING_MISMATCH_BYTE_SIZE));
         preEqErrors.add(new TestPreEqError("non-hex character", "080118zz" + body,
                 PreEqException.ErrorClass.STRING_NOT_BYTE_REPRESENTATION));
+
+        //******************************************************************************************************************
+        // ALL GROUND-TRUTH ECHO TESTS (EchoChannelGenerator: single echo, main tap 8, amplitude 2047). Levels avoid the
+        // CableLabs severity thresholds (-18 / -25 dBc, CM-GL-PNMP-V03 6.7.2). Not yet covered: echoes below 1.5 T (main tap
+        // region) and long delays such as 8 T (MR level reads ~1.3 dB low) - both under review together with TDR.
+        //******************************************************************************************************************
+        double[] delays = {1.5d, 2d, 2.4d, 3d, 3.3d, 5d, 5.7d};
+        double[] phases = {0d, 2.1d, -1.2d};
+        for (double delay : delays) {
+            for (double phase : phases) {
+                echoes.add(new TestEcho(delay, -15d, phase, "immediateActionRequired"));
+                echoes.add(new TestEcho(delay, -21.5d, phase, "highMonitoringFrequency"));
+                echoes.add(new TestEcho(delay, -30d, phase, "noActionRequired"));
+            }
+        }
     }
 
     /**
@@ -148,5 +164,13 @@ public class TestBook {
      */
     public static List<TestPreEqError> getPreEqErrors() {
         return preEqErrors;
+    }
+
+    /**
+     * Returns statically defined ground-truth echo test data.
+     * @return {@link List} of {@link TestEcho} data
+     */
+    public static List<TestEcho> getEchoes() {
+        return echoes;
     }
 }
