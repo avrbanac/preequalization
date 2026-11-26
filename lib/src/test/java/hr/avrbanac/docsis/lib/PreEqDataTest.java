@@ -46,6 +46,20 @@ class PreEqDataTest {
     }
 
     /**
+     * Method for testing that invalid pre-eq strings are rejected with the expected error class.
+     */
+    @Test
+    void testPreEqErrors() {
+        TestBook.getPreEqErrors().forEach(testError -> {
+            PreEqException e = Assertions.assertThrows(
+                    PreEqException.class,
+                    () -> new DefaultPreEqData(testError.getPreEqString()),
+                    testError.getDescription());
+            Assertions.assertEquals(testError.getExpectedErrorClass(), e.getErrorClass(), testError.getDescription());
+        });
+    }
+
+    /**
      * Method for testing pre-eq data structure. Some logging was added to enable this test to also be useful for data presentation.
      */
     @Test

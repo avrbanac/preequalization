@@ -60,15 +60,15 @@ These are findings from comparing the lib code with the sources above. They are 
 - TDR divides the delay by 2 (round trip), consistent with §6.6.2.
 
 **Discrepancies and bugs to address**
-1. **Nibble-format detection** (`DefaultPreEqData.is3NibbleEncoding`). The intent (PNMP §6.2.2) is "use 3-nibble only if the first
+1. **[fixed in v0.4.1] Nibble-format detection** (`DefaultPreEqData.is3NibbleEncoding`). The intent (PNMP §6.2.2) is "use 3-nibble only if the first
    nibble of every value is 0". The code masks a sign-extended `byte` with `0xF000`, so it only detects high bytes ≥ 0x80. A value
    such as `0x1234` or `0x7FFF` (MTNA 32767 modems) is treated as 3-nibble, and `0x7FFF` then decodes as **negative**. The
    correct check is `(bytes[i] & 0xF0) != 0`.
-2. **Header byte 3 is not reserved.** Per RFC 4546 it is the number of *reverse* taps `m`. Byte 1 is forward taps per symbol
+2. **[fixed in v0.4.1] Header byte 3 is not reserved.** Per RFC 4546 it is the number of *reverse* taps `m`. Byte 1 is forward taps per symbol
    (1, 2 or 4), byte 2 is forward tap count `n`. Total length = 4 + 4·(n+m), max 64 taps (260 bytes). The lib ignores byte 3
    and hardcodes 200 hex chars. That is fine for D2.0/3.0 24-tap T-spaced data (m = 0), but byte 3 should at least be validated
    to be 0.
-3. **Main tap position.** PNMP §6.3.1: typically 8, but "some CMTS implementations can have it as low as the sixth position"
+3. **[fixed in v0.4.1] Main tap position.** PNMP §6.3.1: typically 8, but "some CMTS implementations can have it as low as the sixth position"
    (DOCSIS 1.1: 4). The lib reads the index from the header, which is correct. PPTSR/TDR edge cases (main tap at 1 or 24)
    should fail cleanly. `bytes[0]` is a signed byte with no range check against 1..tapCount.
 4. **Universal decoding vs. MTNA > 2047.** PNMP §6.2.3 says the first nibble can always be dropped because the maximum is ≤ 2047.

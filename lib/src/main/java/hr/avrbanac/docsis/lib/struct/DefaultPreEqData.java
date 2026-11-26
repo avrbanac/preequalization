@@ -138,6 +138,7 @@ public class DefaultPreEqData implements PreEqData {
     private static final int NIBBLE_CHECK_MASK = 0b1111_0000;
     private static final int TAP_COUNT = 24;
     private static final int COEFFICIENT_PER_SYMBOL = 1;
+    private static final int REVERSE_TAP_COUNT = 0;
     private static final double BORDER_DIFF_PERC = 0.0005d;
 
     /**
@@ -200,6 +201,16 @@ public class DefaultPreEqData implements PreEqData {
 
         if (bytes[2] != TAP_COUNT) {
             throw PreEqException.WRONG_TAP_COUNT;
+        }
+
+        // RFC 4546 DocsEqualizerData: 4th header byte is the number of reverse taps (m), total taps = n + m
+        if (bytes[3] != REVERSE_TAP_COUNT) {
+            throw PreEqException.REVERSE_TAP_COUNT_NOT_SUPPORTED;
+        }
+
+        // pre-main and post-main metrics (PPESR, PPTSR, PostMTE...) need at least one tap on each side of the main tap
+        if (mainTapIndex < 2 || mainTapIndex > TAP_COUNT - 1) {
+            throw PreEqException.MAIN_TAP_INDEX_OUT_OF_RANGE;
         }
 
         boolean use3NibbleEncoding = is3NibbleEncoding(bytes);

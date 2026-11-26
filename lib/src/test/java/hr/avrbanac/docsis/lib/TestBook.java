@@ -15,6 +15,7 @@ public class TestBook {
     private static final List<TestCoefficientStructure> coefficientStructures = new ArrayList<>();
     private static final List<TestParabolicInterpolation> parabolicInterpolations = new ArrayList<>();
     private static final List<TestPreEqDecoding> preEqDecodings = new ArrayList<>();
+    private static final List<TestPreEqError> preEqErrors = new ArrayList<>();
 
     static {
         //****************************
@@ -81,6 +82,32 @@ public class TestBook {
                 + "000000000000000000000000000000000000000000000000000000000000000000000000";
         preEqDecodings.add(new TestPreEqDecoding(fourNibble, 8, 2047, 0));
         preEqDecodings.add(new TestPreEqDecoding(fourNibble, 9, -2, 16));
+
+        //************************************************************************************************
+        // ALL INVALID PRE-EQ STRING TESTS (valid synthetic string with exactly one header byte / char broken):
+        //************************************************************************************************
+        // header: main tap index | taps per symbol | forward taps (n) | reverse taps (m) -> RFC 4546 DocsEqualizerData
+        String body = fourNibble.substring(8);
+        preEqErrors.add(new TestPreEqError("reverse taps m=1", "08011801" + body,
+                PreEqException.ErrorClass.REVERSE_TAP_COUNT_NOT_SUPPORTED));
+        preEqErrors.add(new TestPreEqError("main tap 0", "00011800" + body,
+                PreEqException.ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE));
+        preEqErrors.add(new TestPreEqError("main tap 1 (no pre-main tap)", "01011800" + body,
+                PreEqException.ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE));
+        preEqErrors.add(new TestPreEqError("main tap 24 (no post-main tap)", "18011800" + body,
+                PreEqException.ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE));
+        preEqErrors.add(new TestPreEqError("main tap 25", "19011800" + body,
+                PreEqException.ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE));
+        preEqErrors.add(new TestPreEqError("main tap 0x80 (negative as signed byte)", "80011800" + body,
+                PreEqException.ErrorClass.MAIN_TAP_INDEX_OUT_OF_RANGE));
+        preEqErrors.add(new TestPreEqError("2 taps per symbol", "08021800" + body,
+                PreEqException.ErrorClass.COEFFICIENT_PER_SYMBOL_MISMATCH));
+        preEqErrors.add(new TestPreEqError("16 forward taps", "08011000" + body,
+                PreEqException.ErrorClass.WRONG_TAP_COUNT));
+        preEqErrors.add(new TestPreEqError("one byte short", fourNibble.substring(2),
+                PreEqException.ErrorClass.STRING_MISMATCH_BYTE_SIZE));
+        preEqErrors.add(new TestPreEqError("non-hex character", "080118zz" + body,
+                PreEqException.ErrorClass.STRING_NOT_BYTE_REPRESENTATION));
     }
 
     /**
@@ -113,5 +140,13 @@ public class TestBook {
      */
     public static List<TestPreEqDecoding> getPreEqDecodings() {
         return preEqDecodings;
+    }
+
+    /**
+     * Returns statically defined data for invalid pre-eq string test.
+     * @return {@link List} of {@link TestPreEqError} data
+     */
+    public static List<TestPreEqError> getPreEqErrors() {
+        return preEqErrors;
     }
 }

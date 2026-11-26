@@ -61,7 +61,7 @@ app/  hr.avrbanac.docsis.app   (JavaFX 11, FXML)
 
 ### Data flow
 
-`raw string` → `DefaultPreEqData(String)` (normalize: lowercase, strip `:` and spaces; validate 200 hex chars; header bytes = main tap index, coeff/symbol must be 1, tap count must be 24; decode coefficients; compute metrics) → `PreEqAnalysis(preEqData)` → `getInChannelFrequencyResponseMagnitude()` / `getTDR(channelWidth, nearTaps, onlyFar)` / `getSignature(channelWidth[, threshold])`.
+`raw string` → `DefaultPreEqData(String)` (normalize: lowercase, strip `:` and spaces; validate 200 hex chars; header bytes per RFC 4546 = main tap index (must be 2..23), taps per symbol (must be 1), forward tap count (must be 24), reverse tap count (must be 0); decode coefficients; compute metrics) → `PreEqAnalysis(preEqData)` → `getInChannelFrequencyResponseMagnitude()` / `getTDR(channelWidth, nearTaps, onlyFar)` / `getSignature(channelWidth[, threshold])`.
 
 ### Key metrics (all on `PreEqMetrics`)
 Energy values are `long`: MTE, MTNA, MTNE, preMTE, postMTE, TTE. Ratio values are `double` in dB: MTC, MTR, NMTER, preMTTER, postMTTER, PPESR, PPTSR. Field naming uses a type prefix: `lXXX` for long and `dXXX` for double.

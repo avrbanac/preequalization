@@ -20,8 +20,16 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 - correctness reference is now CableLabs documentation and physics (see `docs/references`); existing test values are treated as
   unverified legacy values
 
+- non-hex characters were silently parsed (`Character.digit` returns -1, it does not throw), so `STRING_NOT_BYTE_REPRESENTATION`
+  was never raised; now validated explicitly (also odd length)
+- header byte 4 is the number of reverse taps (RFC 4546), not a reserved byte; non-zero value was silently accepted, now rejected
+  with new `REVERSE_TAP_COUNT_NOT_SUPPORTED` (3003)
+- main tap index was not range-checked; values outside 2..23 failed with internal index-out-of-bounds messages, now rejected with
+  new `MAIN_TAP_INDEX_OUT_OF_RANGE` (3004)
+
 ### Added
 - pre-eq decoding test (`TestPreEqDecoding` in `TestBook`) with synthetic 3-nibble, 4-nibble and MTNA 32767 strings
+- invalid pre-eq string test (`TestPreEqError` in `TestBook`) covering every header field, length and non-hex input
 - reference documentation index (`docs/references`)
 
 ## v0.4.0 @avrbanac
