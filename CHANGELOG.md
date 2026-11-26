@@ -7,6 +7,23 @@ Updates should follow the [Keep a CHANGELOG](http://keepchangelog.com/) principl
 ## Unreleased / TODO
 - correlation algorithm (convolution of IFFT with in channel frequency response)
 
+## v0.4.1 @avrbanac
+
+### Fixed
+- 3-nibble / 4-nibble encoding detection: leading nibble mask was applied to a sign-extended byte (`0xF000`), so only upper bytes
+  >= 0x80 were detected; values like `0x7FFF` (MTNA 32767 modems) were decoded as 3-nibble (main tap became -1)
+- TDR test expected value changed from 21.96 to 12.2; the old value came from the pre-v0.3.4 TDR algorithm and the test had
+  been failing since v0.3.4. 12.2 is a regression value only (current output), NOT a verified result; the TDR method itself
+  is under review against CableLabs CM-GL-PNMP-V03
+
+### Changed
+- correctness reference is now CableLabs documentation and physics (see `docs/references`); existing test values are treated as
+  unverified legacy values
+
+### Added
+- pre-eq decoding test (`TestPreEqDecoding` in `TestBook`) with synthetic 3-nibble, 4-nibble and MTNA 32767 strings
+- reference documentation index (`docs/references`)
+
 ## v0.4.0 @avrbanac
 
 ### Fixed

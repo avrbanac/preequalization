@@ -69,7 +69,7 @@ Energy values are `long`: MTE, MTNA, MTNE, preMTE, postMTE, TTE. Ratio values ar
 ## Conventions & gotchas
 
 - **Tap index vs array index**: `getMainTapIndex()` and `Coefficient.getIndex()` are 1-based tap numbers. Use `index - 1` to access the list. Getting this wrong is the most common source of off-by-one bugs here (`PreEqAnalysis.getTDR` mixes both conventions on purpose).
-- **Nibble encoding** is decided once per string in `DefaultPreEqData.is3NibbleEncoding`. A string uses 3-nibble decoding only if no coefficient's leading nibble is set; otherwise it uses 4-nibble decoding. The check uses mask `0xF000` against a sign-extended `byte`, so it actually tests bit 7 of the high byte. Keep this in mind before changing it, because tests depend on the current behavior.
+- **Nibble encoding** is decided once per string in `DefaultPreEqData.is3NibbleEncoding`. A string uses 3-nibble decoding only if no coefficient's leading nibble is set; otherwise it uses 4-nibble decoding (CableLabs CM-GL-PNMP-V03 §6.2). The mask `0xF0` is applied to the upper byte of each value; until v0.4.1 it was `0xF000` against a sign-extended `byte`, which misread MTNA-32767 strings.
 - **MTNA** (`calculateMTNA`) is empirical. It searches 2ⁿ−1 values from 511 upward within 0.05% of √TTE and falls back to the old ceil-log2 formula. Javadoc explains why.
 - `DefaultPreEqData` throws on division-by-zero cases (postMTE == 0). PPTSR reads taps adjacent to the main tap, so a main tap at position 1 or 24 throws. All non-`PreEqException` errors are wrapped into `PreEqException`.
 - The `PreEqException` constants are **shared singleton instances** with a fixed stack trace. Don't rely on their stack traces. Add new error types as an `ErrorClass` entry plus a static constant.
@@ -86,6 +86,8 @@ All lib tests live in `PreEqDataTest` and are **data-driven from `TestBook`**. `
 - `TestCoefficientStructure`: raw bytes → expected real/imag,
 - `TestParabolicInterpolation`: three points → expected x (tests V1 only; TDR tests use V2).
 
-To add coverage, add a new entry to `TestBook` instead of writing a new test method. Expected values were cross-checked against a third-party PreEq tool. CHANGELOG v0.4.0 notes that signature delay was validated on about 1k strings outside the repo. If an algorithm changes, update the expected values only when you can justify the new numbers.
+To add coverage, add a new entry to `TestBook` instead of writing a new test method.
+
+**Source of truth.** Correctness is judged against the CableLabs documentation in `docs/references` (mainly CM-GL-PNMP-V03) and physics, not against past outputs. The existing real-world `TestBook` values came from the code itself or from a third-party pre-eq tool that is known to be buggy (non-deterministic results). Treat them as **unverified regression values**; the TDR value is explicitly marked as such. Prefer synthetic test strings with known ground truth (e.g. a single echo of known level and delay). An expected value may change when the new value is backed by a doc section or a physics argument; cite it in the CHANGELOG.
 
 The app has no tests.

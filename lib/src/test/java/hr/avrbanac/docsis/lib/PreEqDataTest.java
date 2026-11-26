@@ -3,6 +3,7 @@ package hr.avrbanac.docsis.lib;
 import hr.avrbanac.docsis.lib.analysis.ChannelWidth;
 import hr.avrbanac.docsis.lib.analysis.PreEqAnalysis;
 import hr.avrbanac.docsis.lib.analysis.Signature;
+import hr.avrbanac.docsis.lib.struct.Coefficient;
 import hr.avrbanac.docsis.lib.struct.PreEqData;
 import hr.avrbanac.docsis.lib.struct.DefaultPreEqData;
 import hr.avrbanac.docsis.lib.util.MathUtility;
@@ -28,6 +29,19 @@ class PreEqDataTest {
         TestBook.getCoefficientStructures().forEach(testCoefficientStructure -> {
             Assertions.assertEquals(testCoefficientStructure.getExpectedReal(), testCoefficientStructure.getCoefficient().getReal());
             Assertions.assertEquals(testCoefficientStructure.getExpectedImag(), testCoefficientStructure.getCoefficient().getImag());
+        });
+    }
+
+    /**
+     * Method for testing the per-string choice of 3-nibble or 4-nibble coefficient decoding.
+     */
+    @Test
+    void testPreEqDecoding() {
+        TestBook.getPreEqDecodings().forEach(testDecoding -> {
+            PreEqData ped = new DefaultPreEqData(testDecoding.getPreEqString());
+            Coefficient tap = ped.getCoefficients().get(testDecoding.getTapIndex() - 1);
+            Assertions.assertEquals(testDecoding.getExpectedReal(), tap.getReal());
+            Assertions.assertEquals(testDecoding.getExpectedImag(), tap.getImag());
         });
     }
 
